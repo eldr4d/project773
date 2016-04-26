@@ -4,7 +4,8 @@ import os
 import re
 import pickle
 
-__input_path__ = '../input/'
+import public_variables as pv
+import helper_functions as hp
 
 
 def load_tweets():
@@ -17,20 +18,20 @@ def load_tweets():
       directory = 'anonymized_schizophrenia_tweets'
 
 
-    print 'Loading category: ' + category + ' from dir: ' + __input_path__ + directory
+    print 'Loading category: ' + category + ' from dir: ' + pv.__input_path__ + directory
 
     users_dic = {}
-    for filename in os.listdir(__input_path__ + directory):
+    for filename in os.listdir(pv.__input_path__ + directory):
       if(filename.endswith('tweets.gz') == False):
         continue
       user = re.sub('\.tweets\.gz$', '', filename)
       print user
       users_dic[user] = {}
       users_dic[user]["prof"] = {}
-      users_dic[user]["twits"] = []
+      users_dic[user]["tweets"] = []
 
-      with gzip.open(__input_path__ + directory + '/'+filename,'rb') as control:
-        for line in control:
+      with gzip.open(pv.__input_path__ + directory + '/'+filename,'rb') as in_file:
+        for line in in_file:
           json_line = json.loads(line);
           if(users_dic[user]['prof'] == False):
             user_prof = {}
@@ -43,18 +44,22 @@ def load_tweets():
             user_prof['friends'] = json_line['entities']['user']['friends_count']
             user_prof['joined'] = json_line['entities']['user']['created_at']
             users_dic[user]['prof'] = user_prof
-          users_dic[user]["twits"].append(json_line["text"])
+          
+          #ignore retweets
+          if(json_line["text"].startswith(pv.__RT_start__) == False):
+            tweet = hp.replace_entities(json_line["text"], json_line["entities"])
+            users_dic[user]["tweets"].append(tweet)
     tweets[category] = users_dic
 
-  tweets_file = open(__input_path__ + r'all_tweets.dic', 'wb')
+  tweets_file = open(pv.__input_path__ + r'all_tweets.dic', 'wb')
   pickle.dump(tweets, tweets_file)
   tweets_file.close()
   return tweets
 
 def get_tweets():
   tweets = {}
-  if(os.path.isfile(__input_path__ + 'all_tweets.dic')):
-    tweets_file = open(__input_path__ + r'all_tweets.dic', 'rb')
+  if(os.path.isfile(pv.__input_path__ + 'all_tweets.dic')):
+    tweets_file = open(pv.__input_path__ + r'all_tweets.dic', 'rb')
     tweets = pickle.load(tweets_file)
     tweets_file.close()
   else:
