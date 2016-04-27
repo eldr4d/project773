@@ -6,15 +6,16 @@ from tweepy import Stream
 import json
 import pickle
 import sys
+import os
 
 import public_variables as pv
 import helper_functions as hp
 
 #Variables that contains the user credentials to access Twitter API 
 access_token = "225541300-tFKgt5Zn7p4hMemrSwSPObFiQsQv2oPJ3cFvvJDb"
-access_token_secret = "TODO_ADD"
+access_token_secret = "S5UarqRnaA4xTS4iY08sz8YESjJRivuyVJkjMlWOmb600"
 consumer_key = "ygRXzJAJByP3kl4L1EXltGSiG"
-consumer_secret = "TODO_ADD"
+consumer_secret = "b7k3OR9isIbjiYLF6b99cJKHgyzKjHpG4nLDEAZ0eK6DrhJsa6"
 
 tweets = []
 total_tweets = 0
@@ -23,6 +24,7 @@ total_tweets = 0
 class TweetListener(StreamListener):
 	def on_data(self, data):
 		global total_tweets
+		global tweets
 		json_line = json.loads(data)
 
 		# We hit the limit
@@ -36,8 +38,11 @@ class TweetListener(StreamListener):
 
 		if(total_tweets%10000 == 0):
 			print total_tweets
+			tweets_file = open(pv.__input_path__ + pv.__file_to_save_tweets__, 'wb')
+			pickle.dump(tweets, tweets_file)
+			tweets_file.close()
 
-		if(total_tweets == 1000000):
+		if(total_tweets == 3000000):
 			tweets_file = open(pv.__input_path__ + pv.__file_to_save_tweets__, 'wb')
 			pickle.dump(tweets, tweets_file)
 			tweets_file.close()
@@ -51,6 +56,14 @@ class TweetListener(StreamListener):
 
 if __name__ == '__main__':
 
+	#Check and load prev tweets
+	if(os.path.isfile(pv.__input_path__ + pv.__file_to_save_tweets__)):
+		tweets_file = open(pv.__input_path__ + pv.__file_to_save_tweets__, 'rb')
+		tweets = pickle.load(tweets_file)
+		tweets_file.close()
+		total_tweets = len(tweets)
+		print "Total tweets loaded = " + str(total_tweets)
+
 	#This handles Twitter authetification and the connection to Twitter Streaming API
 	l = TweetListener()
 	auth = OAuthHandler(consumer_key, consumer_secret)
@@ -61,7 +74,7 @@ if __name__ == '__main__':
 		stream.filter(languages=['en'], locations=[-180,-90,180,90])
 	except KeyboardInterrupt:
 		print "Total tweets = " + str(total_tweets)
-		tweets_file = open(__input_path__ + __file_to_save_tweets__, 'wb')
+		tweets_file = open(pv.__input_path__ + pv.__file_to_save_tweets__, 'wb')
 		pickle.dump(tweets, tweets_file)
 		tweets_file.close()
 		sys.exit(0)
