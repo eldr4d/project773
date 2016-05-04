@@ -5,7 +5,7 @@ import re
 import pickle
 
 import public_variables as pv
-import helper_functions as hp
+import helper_functions as hf
 
 
 def load_tweets():
@@ -47,7 +47,7 @@ def load_tweets():
           
           #ignore retweets
           if(json_line["text"].startswith(pv.__RT_start__) == False):
-            tweet = hp.replace_entities(json_line["text"], json_line["entities"])
+            tweet = hf.replace_entities(json_line["text"], json_line["entities"])
             users_dic[user]["tweets"].append(tweet)
     tweets[category] = users_dic
 
@@ -68,5 +68,6 @@ def get_tweets():
   print len(tweets)
   print len(tweets['control'])
   print len(tweets['schizophrenia'])
+  return tweets
 
-get_tweets()
+# get_tweets()

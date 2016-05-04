@@ -1,4 +1,6 @@
 import gzip
+import pickle
+import os
 import public_variables as pv
 
 def substitute_string(text, start, stop, new_text):
@@ -33,8 +35,8 @@ def replace_entities(tweet, entities):
 
 def load_tweets_from_twitter():
   tweets = []
-  if(os.path.isfile(pv.__input_path__ + pv.__file_to_save__)):
-    tweets_file = open(pv.__input_path__ + pv.__file_to_save__, 'rb')
+  if(os.path.isfile(pv.__input_path__ + pv.__file_to_save_tweets__)):
+    tweets_file = open(pv.__input_path__ + pv.__file_to_save_tweets__, 'rb')
     tweets = pickle.load(tweets_file)
     tweets_file.close()
   else:
