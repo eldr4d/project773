@@ -6,7 +6,6 @@ import os
 import math
 import pickle
 
-import read_dataset as rd
 import helper_functions as hf
 import public_variables as pv
 
@@ -152,29 +151,22 @@ def perplexity_of_users(unigrams, bigrams, users_tweets):
   return perplexity
 
 
-def get_perplexity_of_users(unigrams, bigrams, users_tweets):
+def get_perplexity_of_users(users_tweets):
   if(os.path.isfile(pv.__input_path__ + pv.__perplexity_file__)):
     perplexity_file = open(pv.__input_path__ + pv.__perplexity_file__, 'rb')
     perplexity = pickle.load(perplexity_file)
     perplexity_file.close()
     return perplexity
   else:
+    twitter_tweets = hf.load_tweets_from_twitter()
+    unigrams = calculate_unigrams(twitter_tweets)
+    bigrams = perp.calculate_bigrams(twitter_tweets)
+    
     perplexity = perplexity_of_users(unigrams, bigrams, users_tweets)
+
     perplexity_file = open(pv.__input_path__ + pv.__perplexity_file__, 'wb')
     pickle.dump(perplexity, perplexity_file)
     perplexity_file.close()
     return perplexity
 
-def main(argv):
-  twitter_tweets = hf.load_tweets_from_twitter()
-  unigrams = calculate_unigrams(twitter_tweets)
-  bigrams = calculate_bigrams(twitter_tweets)
-  users_tweets = rd.get_tweets()
-
-  perplexity = get_perplexity_of_users(unigrams, bigrams, users_tweets)
-  print perplexity
-
-
-if __name__ == "__main__":
-  main(sys.argv[1:])
 
