@@ -3,12 +3,25 @@ import sys
 
 from sklearn import svm
 
+import matplotlib.pyplot as plt
+import sklearn.metrics as metrics
+
 import perplexity_model as perp
 import read_dataset as rd
 
-def evaluate_results(inputs_and_labels, predictions):
-  #TODO someone should do that
+def feature_selection(inputs_and_labels): 
+  # Feel free to choose different test. I just went with chi2:  http://scikit-learn.org/stable/modules/generated/sklearn.feature_selection
+  for i in range(10): 
+    feature_selection.chi2(inputs_and_labels[i]["features"], inputs_and_labels[i]["labels"])
+  # TODO:  plot pvalues for each feature tested (pyplot imported as plt above)... 
+  raise NotImplementedError
 
+def evaluate_results(inputs_and_labels, predictions):
+  for i in range(10): 
+    # TODO:  choose metric ... http://scikit-learn.org/stable/modules/classes.html#classification-metrics
+     print metrics.roc_auc_score(inputs_and_labels[i]["labels"], predictions[i])
+     print metrics.classification_report(inputs_and_labels[i]["labels"], predictions[i])
+     # TODO:  plot scores ... example: http://scikit-learn.org/stable/auto_examples/model_selection/plot_roc_crossval.html#example-model-selection-plot-roc-crossval-py
   return 1.0
 
 def train_classifier(inputs_and_labels, kernel='linear'):
