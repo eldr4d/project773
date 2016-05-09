@@ -13,6 +13,7 @@ __RT_start__ = 'RT @'
 
 __unigrams_file__ = 'unigram_twitter_tweets.dic'
 __bigrams_file__ = 'bigram_twitter_tweets.dic'
+__trigrams_file__ = 'trigram_twitter_tweets.dic'
 __perplexity_file__ = 'perplexity_twitter_tweets.dic'
 
 __unknown_word__ = '__UNKNOWN__'

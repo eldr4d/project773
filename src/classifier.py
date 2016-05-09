@@ -67,6 +67,7 @@ def create_features(users, users_tweets):
     # Add perplexity as feature
     user_features.append(perplexity[dic["group"]][user]["unigrams"])
     user_features.append(perplexity[dic["group"]][user]["bigrams"])
+    user_features.append(perplexity[dic["group"]][user]["trigrams"])
 
     # Add total Number of tweets as feature
     user_features.append(len(users_tweets[dic["group"]][user]["tweets"]))
