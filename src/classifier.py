@@ -3,9 +3,15 @@ import sys
 
 from sklearn import svm
 
+from gensim import corpora, models
+
 import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
 
+import topic_features as t
+import liwc_features as pb
+
+import public_variables as pv
 import perplexity_model as perp
 import read_dataset as rd
 
@@ -85,6 +91,23 @@ def create_features(users, users_tweets):
 
   for user, dic in users.iteritems():
     user_features = []
+
+    user_features = []
+
+    lda_model = models.ldamodel.LdaModel.load(pv.__lda_model__)
+    dictionary = corpora.Dictionary.load(pv.__lda_dict__)
+    liwc_dic = pb.read_liwc(pv.__liwc__)
+
+    # Add topic distribution as feature (70 topics)
+    topics = t.get_features(users_tweets, lda_model, dictionary)
+    user_features.append(topics[dic["group"]][user]["num_sig_topics"])
+    for topic in topics[dic["group"]][user]["topics"]: 
+      user_features.append(topic)
+
+    # Add LIWC category distribution as feature (67 topics)
+    liwc = pb.get_features(users_tweets, liwc_dic)
+    for cat, weight in liwc[dic["group"]][user]["liwc"]: 
+      user_features.append(weight)
 
     # Add perplexity as feature
     user_features.append(perplexity[dic["group"]][user]["unigrams"])
