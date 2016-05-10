@@ -9,15 +9,24 @@ import sklearn.metrics as metrics
 import perplexity_model as perp
 import read_dataset as rd
 
-def feature_selection(inputs_and_labels): 
+# For full cross validation
+# Folds_to_use = range(10)
+# Folds_to_predict = range(10)
+
+# For Testing
+Folds_to_use = [0,1,2]
+Folds_to_predict = [0]
+
+
+def feature_selection(inputs_and_labels):
   # Feel free to choose different test. I just went with chi2:  http://scikit-learn.org/stable/modules/generated/sklearn.feature_selection
-  for i in range(10): 
+  for i in Folds_to_use:
     feature_selection.chi2(inputs_and_labels[i]["features"], inputs_and_labels[i]["labels"])
-  # TODO:  plot pvalues for each feature tested (pyplot imported as plt above)... 
+  # TODO:  plot pvalues for each feature tested (pyplot imported as plt above)...
   raise NotImplementedError
 
 def evaluate_results(inputs_and_labels, predictions):
-  for i in range(10): 
+  for i in Folds_to_use:
     # TODO:  choose metric ... http://scikit-learn.org/stable/modules/classes.html#classification-metrics
      print metrics.roc_auc_score(inputs_and_labels[i]["labels"], predictions[i])
      print metrics.classification_report(inputs_and_labels[i]["labels"], predictions[i])
@@ -26,18 +35,18 @@ def evaluate_results(inputs_and_labels, predictions):
 
 def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
-  for i in range(10):
+  for i in Folds_to_predict:
     svms[i] = svm.SVC(kernel=kernel, verbose=True)
 
     inputs = []
     labels = []
-    for j in range(10):
+    for j in Folds_to_use:
       if(i==j):
         continue
       inputs = inputs + inputs_and_labels[j]["features"]
       labels = labels + inputs_and_labels[j]["labels"]
       print "I = " + str(i)
-      print inputs 
+      print inputs
       print labels
       print "\n"
     print str(len(inputs)) + " " + str(len(labels))
@@ -47,7 +56,7 @@ def train_classifier(inputs_and_labels, kernel='linear'):
 
 def do_prediction(inputs_and_labels, svms):
   results = {}
-  for i in range(10):
+  for i in Folds_to_predict:
     results[i] = svms[i].predict(inputs_and_labels[i]["features"])
   return results
 
@@ -69,7 +78,7 @@ def create_features(users, users_tweets):
 
   features_and_labels = {}
 
-  for i in range(10):
+  for i in Folds_to_use:
     features_and_labels[i] = {}
     features_and_labels[i]["features"] = []
     features_and_labels[i]["labels"] = []
