@@ -29,6 +29,7 @@ def load_tweets():
       users_dic[user] = {}
       users_dic[user]["prof"] = {}
       users_dic[user]["tweets"] = []
+      users_dic[user]["timestamps"] = []
 
       with gzip.open(pv.__input_path__ + directory + '/'+filename,'rb') as in_file:
         for line in in_file:
@@ -49,6 +50,7 @@ def load_tweets():
           if(json_line["text"].startswith(pv.__RT_start__) == False):
             tweet = hf.replace_entities(json_line["text"], json_line["entities"])
             users_dic[user]["tweets"].append(tweet)
+            users_dic[user]["timestamps"].append(json_line['created_at'])
     tweets[category] = users_dic
 
   tweets_file = open(pv.__input_path__ + r'all_tweets.dic', 'wb')
@@ -70,4 +72,5 @@ def get_tweets():
   print len(tweets['schizophrenia'])
   return tweets
 
+# load_tweets()
 # get_tweets()

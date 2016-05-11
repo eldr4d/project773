@@ -42,8 +42,9 @@ def __iter_tweets_by_week__(user_tweets):
 	tweets_by_week = []
 	d1 = None
 	instance = "" 
-	for tweet in user_tweets:
-		tmp = time.strftime('%m/%d/%Y', time.strptime(tweet['joined'],'%a %b %d %H:%M:%S +0000 %Y'))
+	timestamps = user_tweets['timestamps']
+	for tweet in user_tweets["tweets"]:
+		tmp = time.strftime('%m/%d/%Y', time.strptime(timestamps.pop(),'%a %b %d %H:%M:%S +0000 %Y'))
 		tmp = tmp.split('/')
 		d2 = date(int(tmp[2]), int(tmp[0]), int(tmp[1]))
 		if d1 is None:
@@ -85,21 +86,28 @@ def __get_counts__(doc):
 
 def __get_liwc_distr__(doc, liwc_dic):
 	doc_bow, num_tokens = __get_counts__(doc)
-	feats = []
+	feats = defaultdict(lambda:0,{})
 	for cat in liwc_dic:
 		for w in liwc_dic[cat]: 
-			feats.append((cat, np.float64(doc_bow[w])/np.float64(num_tokens)))
-	return sorted(feats, key=lambda tup: (tup[0], tup[1]))
-	
+			if num_tokens > 0: 
+				feats[cat] += np.float64(doc_bow[w])/np.float64(num_tokens)
+	feats_lst = []
+	for cat in feats: 
+		feats_lst.append((cat, feats[cat]))
+	return sorted(feats_lst, key=lambda tup: (tup[0], tup[1]))
+
 def get_features(users_tweets, liwc_dic): 
-	feats = defaultdict(lambda:0,{})
+	feats = {}
 	feats["control"] = {}
 	feats["schizophrenia"] = {}
 	for label in users_tweets.iterkeys():
 		for user in users_tweets[label].iterkeys():
 			feats[label][user] = {}
 			all_user_tweets = ""
-			for tweet in users_tweets[label][user]["tweets"]: 
+			# for cat in liwc_dic: feats[label][user][cat] = []
+			for tweet in __iter_tweets_by_week__(users_tweets[label][user]): 
+				# for cat, weight in __get_liwc_distr__(tweet, liwc_dic): 
+				# 	feats[label][user][cat].append(weight)
 				all_user_tweets += tweet	
 			feats[label][user]["liwc"] = __get_liwc_distr__(all_user_tweets, liwc_dic) 
 	return feats

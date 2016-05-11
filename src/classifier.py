@@ -94,17 +94,16 @@ def create_features(users, users_tweets):
 
     user_features = []
 
+    # Add topic distribution as feature 
     lda_model = models.ldamodel.LdaModel.load(pv.__lda_model__)
     dictionary = corpora.Dictionary.load(pv.__lda_dict__)
-    liwc_dic = pb.read_liwc(pv.__liwc__)
-
-    # Add topic distribution as feature (70 topics)
     topics = t.get_features(users_tweets, lda_model, dictionary)
     user_features.append(topics[dic["group"]][user]["num_sig_topics"])
     for topic in topics[dic["group"]][user]["topics"]: 
       user_features.append(topic)
 
-    # Add LIWC category distribution as feature (67 topics)
+    # Add LIWC category distribution as feature 
+    liwc_dic = pb.read_liwc(pv.__liwc__)
     liwc = pb.get_features(users_tweets, liwc_dic)
     for cat, weight in liwc[dic["group"]][user]["liwc"]: 
       user_features.append(weight)
