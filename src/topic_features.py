@@ -44,7 +44,6 @@ def __tokenize__(text):
 def __get_doc_topic_distribution__(dictionary, lda_model, doc, minimum_probability=None):
 	doc_bow = dictionary.doc2bow(__tokenize__(doc))
 	topic_distr = lda_model.get_document_topics(doc_bow, minimum_probability=minimum_probability)
-	print topic_distr
 	return topic_distr
 
 def get_features(users_tweets, model, dictionary): 

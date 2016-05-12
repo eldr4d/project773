@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-from nltk.corpus import TwitterCorpusReader
 from nltk.corpus import stopwords
 from nltk.stem.porter import *
 
 from datetime import date
-import numpy as np
+from collections import Counter, defaultdict
+from scipy.stats.stats import spearmanr 
+from sklearn import metrics 
 
 import re, os, time, string
+import numpy as np
 
 import public_variables as pv
-
-from collections import Counter, defaultdict
 
 
 '''
@@ -18,8 +18,10 @@ from collections import Counter, defaultdict
 These features look at the Pennebaker mental health categories. It takes a user's tweet history and 
 gets the proportion of words used in the user's tweets that appear in each Pennebaker category. 
 
-'''
+It also breaks a user's tweets into documents by week and gets the proportion of Pennebaker categories for each week's tweets.
+It then finds the variance in each category through the user's weeks as well as the mutual info and corr between certain topic pairs. 
 
+'''
 
 stop = stopwords.words('english') + ['__url__', '__um__', '__sm__','__ht__', 'da', 'would', 'that', 'rt', 'gt', 'lt', 'ht', 'via', 'amp', 'hi', 'hello', 'that', 'ive', 'dont', 'isnt', 'ill', 'hell', 'no', 'yeah', 'youve', 'teh', 'lot', 'didnt', 'dont']
 stemmer = PorterStemmer()
@@ -96,6 +98,28 @@ def __get_liwc_distr__(doc, liwc_dic):
 		feats_lst.append((cat, feats[cat]))
 	return sorted(feats_lst, key=lambda tup: (tup[0], tup[1]))
 
+def __get_variance__(user_feats):
+	cats = ["affect", "posemo", "negemo", "cogmech", "health", "body", "social", "incl", "excl", "see", "hear", "feel", "sad", "anger", "anx"]
+	var = []
+	for c in cats: 
+		var.append(np.var(user_feats[c])) 
+	return var
+
+def __get_mutual_info_and_correlation__(user_feats, bins=10): 
+	pairs = [("social", "anx"), ("body", "health"), ("posemo", "negemo"), ("death", "posemo"), ("affect", "social"), ("see", "anx")]
+	minfo = []
+	for c1, c2 in pairs:
+		corr = spearmanr(user_feats[c1], user_feats[c2])[0] 
+		minfo.append(corr)
+		plot = np.histogram2d(user_feats[c1], user_feats[c2], bins=bins)[0]
+		try: 
+			mi = metrics.mutual_info_score(None, None, contingency=plot)
+		except ValueError: 
+			mi = 0
+		finally: 
+			minfo.append(mi)
+	return minfo
+
 def get_features(users_tweets, liwc_dic): 
 	feats = {}
 	feats["control"] = {}
@@ -104,10 +128,12 @@ def get_features(users_tweets, liwc_dic):
 		for user in users_tweets[label].iterkeys():
 			feats[label][user] = {}
 			all_user_tweets = ""
-			# for cat in liwc_dic: feats[label][user][cat] = []
+			for cat in liwc_dic: feats[label][user][cat] = []
 			for tweet in __iter_tweets_by_week__(users_tweets[label][user]): 
-				# for cat, weight in __get_liwc_distr__(tweet, liwc_dic): 
-				# 	feats[label][user][cat].append(weight)
+				for cat, weight in __get_liwc_distr__(tweet, liwc_dic): 
+					feats[label][user][cat].append(weight)
 				all_user_tweets += tweet	
 			feats[label][user]["liwc"] = __get_liwc_distr__(all_user_tweets, liwc_dic) 
+			feats[label][user]["liwc_var"] = __get_variance__(feats[label][user])
+			feats[label][user]["liwc_minfo_corr"] = __get_mutual_info_and_correlation__(feats[label][user])
 	return feats

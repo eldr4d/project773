@@ -92,8 +92,6 @@ def create_features(users, users_tweets):
   for user, dic in users.iteritems():
     user_features = []
 
-    user_features = []
-
     # Add topic distribution as feature 
     lda_model = models.ldamodel.LdaModel.load(pv.__lda_model__)
     dictionary = corpora.Dictionary.load(pv.__lda_dict__)
@@ -105,8 +103,12 @@ def create_features(users, users_tweets):
     # Add LIWC category distribution as feature 
     liwc_dic = pb.read_liwc(pv.__liwc__)
     liwc = pb.get_features(users_tweets, liwc_dic)
-    for cat, weight in liwc[dic["group"]][user]["liwc"]: 
-      user_features.append(weight)
+    for i in range(64): 
+      user_features.append(liwc[dic["group"]][user]["liwc"][i])
+    for i in range(15):
+      user_features.append(liwc[dic["group"]][user]["liwc_var"][i])
+    for minfo in liwc[dic["group"]][user]["liwc_minfo_corr"]: 
+      user_features.append(minfo)
 
     # Add perplexity as feature
     user_features.append(perplexity[dic["group"]][user]["unigrams"])
