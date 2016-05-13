@@ -139,7 +139,7 @@ def get_features(users, users_tweets, liwc_dic, folds):
 	
 	for label in users_tweets.iterkeys():
 		for user in users_tweets[label].iterkeys():
-			aif users[user]["fold"] not in folds: continue
+			if users[user]["fold"] not in folds: continue
 			
 			feats[label][user] = {}
 			all_user_tweets = ""		

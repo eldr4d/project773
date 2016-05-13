@@ -6,6 +6,7 @@ from sklearn import svm
 
 from gensim import corpora, models
 
+import numpy as np
 import sklearn.metrics as metrics
 
 import topic_features as t
@@ -23,13 +24,6 @@ Folds_to_predict = range(10)
 # Folds_to_use = [1]
 # Folds_to_predict = [0]
 
-def feature_selection(inputs_and_labels):
-  for idx, fold in enumerate(Folds_to_predict):
-    y_true = __labels_2_binary__(inputs_and_labels[fold]["labels"])
-    y_pred = __labels_2_binary__(predictions[fold])
-    feature_selection.chi2(inputs_and_labels[i]["features"], inputs_and_labels[i]["labels"])
-  raise NotImplementedError
-
 def __get_id__(label): 
   return 1 if label.startswith('s') else 0
 
@@ -40,21 +34,39 @@ def evaluate_results(inputs_and_labels, predictions):
   print "*******************************************"
   print ""
 
+  avg_precision = 0
+  avg_recall = 0
+  avg_roc_auc = 0
+  avg_f1 = 0
+
   for fold in Folds_to_predict:
-     print "True: " 
+     print "True: "  + " (len: " + str(len(inputs_and_labels[fold]["labels"])) + ")"
      print str(inputs_and_labels[fold]["labels"])
      y_true = __labels_2_binary__(inputs_and_labels[fold]["labels"])
 
      print ""
-     print "Predicted: " 
+     print "Predicted: " + " (len: " + str(len(predictions[fold])) + ")"
      print str(predictions[fold])
      y_pred = __labels_2_binary__(predictions[fold])
+
+     roc_auc = metrics.roc_auc_score(y_true, y_pred)
      
      print ""
      print "Scores: "
-     print "ROC AUC: " + str(metrics.roc_auc_score(y_true, y_pred))
+     print "ROC AUC: " + str(roc_auc)
      print metrics.classification_report(y_true, y_pred)
      print ""
+
+     avg_roc_auc += np.float(roc_auc)/np.float(10)
+     avg_precision += np.float(metrics.precision_score(y_true, y_pred))/np.float(10)
+     avg_recall += np.float(metrics.recall_score(y_true, y_pred))/np.float(10)
+     avg_f1 += np.float(metrics.f1_score(y_true, y_pred))/np.float(10)
+
+  print "Overall Scores: "
+  print "ROC AUC: " + str(avg_roc_auc)
+  print "Prec: " + str(avg_precision)
+  print "Recall: " + str(avg_recall)
+  print "F1: " + str(avg_f1)
 
 def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
@@ -84,6 +96,8 @@ def do_prediction(inputs_and_labels, svms):
   return results
 
 def load_manifest():
+  non_english = ['ioY8SXeZ4O', 'kABBqs5cM25', 'fE28aNayZ3KZ2'] # folds: 4, 0, 9
+
   users = {}
   with open('../input/anonymized_user_manifest.csv', 'rb') as csvfile:
     manifest = csv.reader(csvfile, delimiter=',')
@@ -91,16 +105,17 @@ def load_manifest():
     #skip first line
     manifest.next()
     for row in manifest:
+      # if row[0] in non_english: continue
       users[row[0]] = {}
       users[row[0]]["group"] = row[1]
       users[row[0]]["fold"] = int(row[5])
   return users
 
 def create_features(users, users_tweets):
-  
+
   folds_for_features = Folds_to_use + Folds_to_predict
 
-  perplexity = perp.get_perplexity_of_users(users_tweets)
+  # perplexity = perp.get_perplexity_of_users(users_tweets)
 
   lda_model = models.ldamodel.LdaModel.load(pv.__lda_model__)
   dictionary = corpora.Dictionary.load(pv.__lda_dict__)
@@ -130,12 +145,12 @@ def create_features(users, users_tweets):
 
     # Add topic distribution as features
     user_features.append(topics[dic["group"]][user]["num_sig_topics"])
-    for topic_id in topics[dic["group"]][user]["topics"].iterkeys(): 
-      user_features.append(topics[dic["group"]][user]["topics"][topic_id])
+    # for topic_id in topics[dic["group"]][user]["topics"].iterkeys(): 
+    #   user_features.append(topics[dic["group"]][user]["topics"][topic_id])
 
     # Add LIWC category distribution as feature 
-    for i in range(63): 
-      user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
+    # for i in range(63): 
+    #   user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
     for i in range(15):
       user_features.append(liwc[dic["group"]][user]["liwc_var"][i])
     for minfo in liwc[dic["group"]][user]["liwc_minfo"]: 
@@ -143,17 +158,17 @@ def create_features(users, users_tweets):
 
     # Add parts-of-speech as feature
     for tag in pos_feats[dic["group"]][user]["avg_pos"].keys(): 
-      user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
+      # user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
       user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
-      user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
+      # user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
     # Add perplexity as feature
-    user_features.append(perplexity[dic["group"]][user]["unigrams"])
-    user_features.append(perplexity[dic["group"]][user]["bigrams"])
-    user_features.append(perplexity[dic["group"]][user]["trigrams"])
+    # user_features.append(perplexity[dic["group"]][user]["unigrams"])
+    # user_features.append(perplexity[dic["group"]][user]["bigrams"])
+    # user_features.append(perplexity[dic["group"]][user]["trigrams"])
 
     # Add Twitter metadata features
-    user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
+    #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
     #user_features.append(users_tweets[dic["group"]][user]["friends_count"])
     #user_features.append(users_tweets[dic["group"]][user]["followers_count"])
 
@@ -186,6 +201,7 @@ def main(argv):
   print results
   evaluate_results(features_and_labels, results)
   end = time.time()
+  print ""
   print "Time: " + str(end - start)
 
 if __name__ == "__main__":
