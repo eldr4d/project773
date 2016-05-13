@@ -19,7 +19,8 @@ These features look at the Pennebaker mental health categories. It takes a user'
 gets the proportion of words used in the user's tweets that appear in each Pennebaker category. 
 
 It also breaks a user's tweets into documents by week and gets the proportion of Pennebaker categories for each week's tweets.
-It then finds the variance in each category through the user's weeks as well as the mutual info and corr between certain topic pairs. 
+It then finds the variance in each category through the user's weeks (probably want something different than variance though)
+as well as the mutual info btwn certain category pairs for the tweeter. 
 
 '''
 
@@ -31,9 +32,11 @@ def __tokenize_and_normalize__(text):
 	text = text.replace("'", "")
 	text = re.sub("([^0-9A-Za-z__ \t])|(\w+:\/\/\S+)"," ",text)
 	text = re.sub("[0-9]+", "", text)
+	
 	words = text.split()
 	words = [stemmer.stem(word.lower()) for word in words if (word.strip().lower() not in stop) and (len(word) > 1)]
 	words = [re.sub(regex, '', word) for word in words]
+
 	return words
 
 def __num_days__(d1, d2): 
@@ -44,23 +47,27 @@ def __iter_tweets_by_week__(user_tweets):
 	tweets_by_week = []
 	d1 = None
 	instance = "" 
-	timestamps = user_tweets['timestamps']
-	for tweet in user_tweets["tweets"]:
-		tmp = time.strftime('%m/%d/%Y', time.strptime(timestamps.pop(),'%a %b %d %H:%M:%S +0000 %Y'))
-		tmp = tmp.split('/')
-		d2 = date(int(tmp[2]), int(tmp[0]), int(tmp[1]))
-		if d1 is None:
-			d1 = d2
-			instance = " "
-		elif __num_days__(d1, d2) > 7:	
-			d1 = d2
-			if (len(instance.split()) > 99): 
-				instance += u"\n"
-				yield instance
-			instance = " "
-		else: 
-			instance += u" ".join([l.strip() for l in __tokenize_and_normalize__(tweet)])
-	yield instance
+	try: 
+		timestamps = user_tweets['timestamps']
+		for tweet in user_tweets["tweets"]:
+			tmp = time.strftime('%m/%d/%Y', time.strptime(timestamps.pop(),'%a %b %d %H:%M:%S +0000 %Y'))
+			tmp = tmp.split('/')
+			d2 = date(int(tmp[2]), int(tmp[0]), int(tmp[1]))
+			if d1 is None:
+				d1 = d2
+				instance = " "
+			elif __num_days__(d1, d2) > 7:	
+				d1 = d2
+				if (len(instance.split()) > 99): 
+					instance += u"\n"
+					yield instance
+				instance = " "
+			else: 
+				instance += u" ".join([l.strip() for l in __tokenize_and_normalize__(tweet)])
+	except Exception: 
+		print "Timestamp Error: Discarding Users Tweets"
+	finally: 
+		yield instance
 
 def read_liwc(path):
 	txt = open(path, "r+").read()
@@ -89,28 +96,32 @@ def __get_counts__(doc):
 def __get_liwc_distr__(doc, liwc_dic):
 	doc_bow, num_tokens = __get_counts__(doc)
 	feats = defaultdict(lambda:0,{})
-	for cat in liwc_dic:
+	sorted_cat = sorted(liwc_dic, key=lambda tup: tup[0])
+	
+	for cat in liwc_dic.keys():
 		for w in liwc_dic[cat]: 
-			if num_tokens > 0: 
-				feats[cat] += np.float64(doc_bow[w])/np.float64(num_tokens)
+			if not feats[cat]: feats[cat] = 0
+			if doc_bow[w] == 0: continue
+			feats[cat] += np.float64(doc_bow[w])/np.float64(num_tokens)
+	
 	feats_lst = []
-	for cat in feats: 
+	for cat in feats.keys(): 
 		feats_lst.append((cat, feats[cat]))
+	
 	return sorted(feats_lst, key=lambda tup: (tup[0], tup[1]))
 
 def __get_variance__(user_feats):
 	cats = ["affect", "posemo", "negemo", "cogmech", "health", "body", "social", "incl", "excl", "see", "hear", "feel", "sad", "anger", "anx"]
-	var = []
-	for c in cats: 
-		var.append(np.var(user_feats[c])) 
-	return var
+	return [np.var(user_feats[c]) for c in cats ]
 
-def __get_mutual_info_and_correlation__(user_feats, bins=10): 
+def __get_mixed_model_variance__(user_feats):
+	raise NotImplementedError
+
+def __get_mutual_info__(user_feats, bins=10): 
 	pairs = [("social", "anx"), ("body", "health"), ("posemo", "negemo"), ("death", "posemo"), ("affect", "social"), ("see", "anx")]
 	minfo = []
+	
 	for c1, c2 in pairs:
-		corr = spearmanr(user_feats[c1], user_feats[c2])[0] 
-		minfo.append(corr)
 		plot = np.histogram2d(user_feats[c1], user_feats[c2], bins=bins)[0]
 		try: 
 			mi = metrics.mutual_info_score(None, None, contingency=plot)
@@ -118,22 +129,29 @@ def __get_mutual_info_and_correlation__(user_feats, bins=10):
 			mi = 0
 		finally: 
 			minfo.append(mi)
+	
 	return minfo
 
-def get_features(users_tweets, liwc_dic): 
+def get_features(users, users_tweets, liwc_dic, folds): 
 	feats = {}
 	feats["control"] = {}
 	feats["schizophrenia"] = {}
+	
 	for label in users_tweets.iterkeys():
 		for user in users_tweets[label].iterkeys():
+			aif users[user]["fold"] not in folds: continue
+			
 			feats[label][user] = {}
-			all_user_tweets = ""
+			all_user_tweets = ""		
 			for cat in liwc_dic: feats[label][user][cat] = []
+
 			for tweet in __iter_tweets_by_week__(users_tweets[label][user]): 
 				for cat, weight in __get_liwc_distr__(tweet, liwc_dic): 
 					feats[label][user][cat].append(weight)
-				all_user_tweets += tweet	
+				all_user_tweets += tweet
+			
 			feats[label][user]["liwc"] = __get_liwc_distr__(all_user_tweets, liwc_dic) 
 			feats[label][user]["liwc_var"] = __get_variance__(feats[label][user])
-			feats[label][user]["liwc_minfo_corr"] = __get_mutual_info_and_correlation__(feats[label][user])
+			feats[label][user]["liwc_minfo"] = __get_mutual_info__(feats[label][user])
+	
 	return feats
