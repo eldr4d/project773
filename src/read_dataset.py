@@ -51,6 +51,8 @@ def load_tweets():
             tweet = hf.replace_entities(json_line["text"], json_line["entities"])
             users_dic[user]["tweets"].append(tweet)
             users_dic[user]["timestamps"].append(json_line['created_at'])
+            users_dic[user]["friends_count"] = json_line['user']['friends_count']
+            users_dic[user]["followers_count"] = json_line['user']['followers_count']
     tweets[category] = users_dic
 
   tweets_file = open(pv.__input_path__ + r'all_tweets.dic', 'wb')

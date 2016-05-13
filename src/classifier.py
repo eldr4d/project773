@@ -1,43 +1,60 @@
 import csv
 import sys
+import time
 
 from sklearn import svm
 
 from gensim import corpora, models
 
-import matplotlib.pyplot as plt
 import sklearn.metrics as metrics
 
 import topic_features as t
 import liwc_features as pb
-
+import pos_features as ps
 import public_variables as pv
 import perplexity_model as perp
 import read_dataset as rd
 
 # For full cross validation
-# Folds_to_use = range(10)
-# Folds_to_predict = range(10)
+Folds_to_use = range(10)
+Folds_to_predict = range(10)
 
 # For Testing
-Folds_to_use = [0,1,2]
-Folds_to_predict = [0]
-
+# Folds_to_use = [1]
+# Folds_to_predict = [0]
 
 def feature_selection(inputs_and_labels):
-  # Feel free to choose different test. I just went with chi2:  http://scikit-learn.org/stable/modules/generated/sklearn.feature_selection
-  for i in Folds_to_use:
+  for idx, fold in enumerate(Folds_to_predict):
+    y_true = __labels_2_binary__(inputs_and_labels[fold]["labels"])
+    y_pred = __labels_2_binary__(predictions[fold])
     feature_selection.chi2(inputs_and_labels[i]["features"], inputs_and_labels[i]["labels"])
-  # TODO:  plot pvalues for each feature tested (pyplot imported as plt above)...
   raise NotImplementedError
 
+def __get_id__(label): 
+  return 1 if label.startswith('s') else 0
+
+def __labels_2_binary__(vector): 
+  return [__get_id__(label) for label in vector]
+
 def evaluate_results(inputs_and_labels, predictions):
-  for i in Folds_to_use:
-    # TODO:  choose metric ... http://scikit-learn.org/stable/modules/classes.html#classification-metrics
-     print metrics.roc_auc_score(inputs_and_labels[i]["labels"], predictions[i])
-     print metrics.classification_report(inputs_and_labels[i]["labels"], predictions[i])
-     # TODO:  plot scores ... example: http://scikit-learn.org/stable/auto_examples/model_selection/plot_roc_crossval.html#example-model-selection-plot-roc-crossval-py
-  return 1.0
+  print "*******************************************"
+  print ""
+
+  for fold in Folds_to_predict:
+     print "True: " 
+     print str(inputs_and_labels[fold]["labels"])
+     y_true = __labels_2_binary__(inputs_and_labels[fold]["labels"])
+
+     print ""
+     print "Predicted: " 
+     print str(predictions[fold])
+     y_pred = __labels_2_binary__(predictions[fold])
+     
+     print ""
+     print "Scores: "
+     print "ROC AUC: " + str(metrics.roc_auc_score(y_true, y_pred))
+     print metrics.classification_report(y_true, y_pred)
+     print ""
 
 def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
@@ -80,7 +97,19 @@ def load_manifest():
   return users
 
 def create_features(users, users_tweets):
+  
+  folds_for_features = Folds_to_use + Folds_to_predict
+
   perplexity = perp.get_perplexity_of_users(users_tweets)
+
+  lda_model = models.ldamodel.LdaModel.load(pv.__lda_model__)
+  dictionary = corpora.Dictionary.load(pv.__lda_dict__)
+  topics = t.get_features(users, users_tweets, lda_model, dictionary, folds_for_features)
+
+  liwc_dic = pb.read_liwc(pv.__liwc__)
+  liwc = pb.get_features(users, users_tweets, liwc_dic, folds_for_features)
+  
+  pos_feats = ps.get_pos_features(users, users_tweets, folds_for_features)
 
   features_and_labels = {}
 
@@ -89,34 +118,44 @@ def create_features(users, users_tweets):
     features_and_labels[i]["features"] = []
     features_and_labels[i]["labels"] = []
 
+  for i in Folds_to_predict: 
+    features_and_labels[i] = {}
+    features_and_labels[i]["features"] = []
+    features_and_labels[i]["labels"] = []
+
   for user, dic in users.iteritems():
+    if users[user]["fold"] not in folds_for_features: continue   # for debugging: ignores users not in either fold... 
+
     user_features = []
 
-    # Add topic distribution as feature 
-    lda_model = models.ldamodel.LdaModel.load(pv.__lda_model__)
-    dictionary = corpora.Dictionary.load(pv.__lda_dict__)
-    topics = t.get_features(users_tweets, lda_model, dictionary)
+    # Add topic distribution as features
     user_features.append(topics[dic["group"]][user]["num_sig_topics"])
-    for topic in topics[dic["group"]][user]["topics"]: 
-      user_features.append(topic)
+    for topic_id in topics[dic["group"]][user]["topics"].iterkeys(): 
+      user_features.append(topics[dic["group"]][user]["topics"][topic_id])
 
     # Add LIWC category distribution as feature 
-    liwc_dic = pb.read_liwc(pv.__liwc__)
-    liwc = pb.get_features(users_tweets, liwc_dic)
-    for i in range(64): 
-      user_features.append(liwc[dic["group"]][user]["liwc"][i])
+    for i in range(63): 
+      user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
     for i in range(15):
       user_features.append(liwc[dic["group"]][user]["liwc_var"][i])
-    for minfo in liwc[dic["group"]][user]["liwc_minfo_corr"]: 
+    for minfo in liwc[dic["group"]][user]["liwc_minfo"]: 
       user_features.append(minfo)
+
+    # Add parts-of-speech as feature
+    for tag in pos_feats[dic["group"]][user]["avg_pos"].keys(): 
+      user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
+      user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
+      user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
     # Add perplexity as feature
     user_features.append(perplexity[dic["group"]][user]["unigrams"])
     user_features.append(perplexity[dic["group"]][user]["bigrams"])
     user_features.append(perplexity[dic["group"]][user]["trigrams"])
 
-    # Add total Number of tweets as feature
-    user_features.append(len(users_tweets[dic["group"]][user]["tweets"]))
+    # Add Twitter metadata features
+    user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
+    #user_features.append(users_tweets[dic["group"]][user]["friends_count"])
+    #user_features.append(users_tweets[dic["group"]][user]["followers_count"])
 
     features_and_labels[dic["fold"]]["features"].append(user_features)
     features_and_labels[dic["fold"]]["labels"].append(dic["group"])
@@ -128,19 +167,26 @@ def main(argv):
 
   users = load_manifest()
 
+  start = time.time()
+  print "Using folds: " + str(Folds_to_use)
+  print "Predicting folds: " + str(Folds_to_predict)
+  fold = Folds_to_use[0]
   features_and_labels = create_features(users, users_tweets)
   print features_and_labels.keys()
   print ""
-  print features_and_labels[2].keys()
+  print features_and_labels[fold].keys()
   print ""
-  print str(len(features_and_labels[2]["features"])) + " " + str(len(features_and_labels[2]["labels"]))
+  print str(len(features_and_labels[fold]["features"])) + " " + str(len(features_and_labels[fold]["labels"]))
   print ""
-  print features_and_labels[2]["labels"]
+  print features_and_labels[fold]["labels"]
   svms = train_classifier(features_and_labels, kernel='rbf')
   results = do_prediction(features_and_labels, svms)
   print "\n"
   print "\n"
   print results
+  evaluate_results(features_and_labels, results)
+  end = time.time()
+  print "Time: " + str(end - start)
 
 if __name__ == "__main__":
   main(sys.argv[1:])
