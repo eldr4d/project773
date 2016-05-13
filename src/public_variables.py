@@ -22,3 +22,14 @@ __liwc__= __input_path__ + "LIWC2007_updated.dic"
 __path_to_tweeboparser__ = '../tools/ark-tweet-nlp-0.3.2.jar'
 
 __unknown_word__ = '__UNKNOWN__'
+
+
+TWEEBO_INPUT = "../../../output/tweebo/tweets_%s.txt"
+TWEEBO_OUTPUT = "../../../output/tweebo/tweets_%s.txt.predict"
+CSV_PATH = "../../input/anonymized_user_manifest.csv"
+DB_PATH = "../../../output/tweets.db"
+DOC2VEC_WIDTH = 100
+DOC2VEC = "../../../doc2vec.d2v"
+DOC2VEC_K = 50 #number of clusters
+DOC2VEC_KMEANS = "../../../output/doc2vec_kmeans.pickle"
+DOC2VEC_FEATURES = "../../../output/doc2vec_features.pickle"

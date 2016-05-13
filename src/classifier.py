@@ -15,6 +15,7 @@ import pos_features as ps
 import public_variables as pv
 import perplexity_model as perp
 import read_dataset as rd
+import doc2vec_features
 
 # For full cross validation
 Folds_to_use = range(10)
@@ -161,6 +162,8 @@ def create_features(users, users_tweets):
       # user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
       user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
       # user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
+
+    doc2vec_features.add_features(user, user_features)
 
     # Add perplexity as feature
     # user_features.append(perplexity[dic["group"]][user]["unigrams"])
