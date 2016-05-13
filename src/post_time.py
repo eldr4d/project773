@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed May 11 14:38:07 2016
-
-@author: Vasudha
-"""
-
 import re
 import numpy
 #import read_dataset as rd
