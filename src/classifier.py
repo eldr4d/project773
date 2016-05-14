@@ -189,12 +189,12 @@ def create_features(users, users_tweets):
     user_features.append(temporal[dic["group"]][user]["daily_tweeting_rate"])
     user_features.append(temporal[dic["group"]][user]["weekly_tweeting_rate"])
     user_features.append(temporal[dic["group"]][user]["monthly_tweeting_rate"])
-    user_features.append(temporal[dic["group"]][user]["10_min_span_tweets"])
-    user_features.append(temporal[dic["group"]][user]["30_min_span_tweets"])
-    user_features.append(temporal[dic["group"]][user]["60_min_span_tweets"])
-    user_features.append(temporal[dic["group"]][user]["10_min_span_time"])
-    user_features.append(temporal[dic["group"]][user]["30_min_span_time"])
-    user_features.append(temporal[dic["group"]][user]["60_min_span_time"])
+    #user_features.append(temporal[dic["group"]][user]["10_min_span_tweets"])
+    #user_features.append(temporal[dic["group"]][user]["30_min_span_tweets"])
+    #user_features.append(temporal[dic["group"]][user]["60_min_span_tweets"])
+    #user_features.append(temporal[dic["group"]][user]["10_min_span_time"])
+    #user_features.append(temporal[dic["group"]][user]["30_min_span_time"])
+    #user_features.append(temporal[dic["group"]][user]["60_min_span_time"])
     user_features.append(temporal[dic["group"]][user]["comp_120ch_twt_60sit"])
 
     ######### Add Twitter metadata features #########
