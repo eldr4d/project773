@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from nltk.corpus import stopwords
+import pickle
 from nltk.stem.porter import *
 
 from gensim import corpora, models, similarities, matutils
@@ -16,58 +17,76 @@ import classifier as cl
 
 '''
 
-Gives topics for a users full tweet history based on a topic model built from qntfy data and pooled by author. 
+Gives topics for a users full tweet history based on a topic model
+built from qntfy data and pooled by author.
 
 '''
- 
-stop = stopwords.words('english') + ['__url__', '__um__', '__sm__','__ht__', 'da', 'would', 'that', 'rt', 'gt', 'lt', 'ht', 'via', 'amp', 'hi', 'hello', 'that', 'ive', 'dont', 'isnt', 'ill', 'hell', 'no', 'yeah', 'youve', 'teh', 'lot', 'didnt', 'dont']
+
+stop = stopwords.words('english') + ['__url__', '__um__', '__sm__','__ht__',
+                                     'da', 'would', 'that', 'rt', 'gt', 'lt',
+                                     'ht', 'via', 'amp', 'hi', 'hello', 'that',
+                                     'ive', 'dont', 'isnt', 'ill', 'hell',
+                                     'no', 'yeah', 'youve', 'teh', 'lot',
+                                     'didnt', 'dont']
 stemmer = PorterStemmer()
 regex = re.compile('[%s]' % re.escape(string.punctuation))
 
 def __run_cmd__(cmd): 
-	p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-	output, err = p.communicate()
+  p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+  output, err = p.communicate()
 
 def __tokenize_and_clean__(text):
-	text = text.replace("'", "")
-	text = re.sub("([^0-9A-Za-z__ \t])|(\w+:\/\/\S+)"," ",text)
-	text = re.sub("[0-9]+", "", text)
-	words = text.split()
-	words = [stemmer.stem(word.lower()) for word in words if (word.strip().lower() not in stop) and (len(word) > 1)]
-	words = [re.sub(regex, '', word) for word in words]
-	return words
+  text = text.replace("'", "")
+  text = re.sub("([^0-9A-Za-z__ \t])|(\w+:\/\/\S+)"," ",text)
+  text = re.sub("[0-9]+", "", text)
+  words = text.split()
+  words = [stemmer.stem(word.lower()) for word in words if (word.strip().lower() not in stop) and (len(word) > 1)]
+  words = [re.sub(regex, '', word) for word in words]
+  return words
 
 def __get_doc_topic_distribution__(dictionary, lda_model, doc, minimum_probability=None):
-	doc_bow = dictionary.doc2bow(__tokenize_and_clean__(doc))
-	topic_distr = lda_model.get_document_topics(doc_bow, minimum_probability=minimum_probability)
-	return topic_distr
+  doc_bow = dictionary.doc2bow(__tokenize_and_clean__(doc))
+  topic_distr = lda_model.get_document_topics(doc_bow, minimum_probability=minimum_probability)
+  return topic_distr
 
-def get_features(users, users_tweets, model, dictionary, folds): 
-	feats = {}
-	feats["control"] = {}
-	feats["schizophrenia"] = {}
-	
-	for label in users_tweets.iterkeys():
-		for user in users_tweets[label].iterkeys():
-			if users[user]["fold"] not in folds: continue
-			
-			feats[label][user] = {}
-			doc = ""
-			
-			for tweet in users_tweets[label][user]["tweets"]:
-				doc += tweet
-			
-			topics = __get_doc_topic_distribution__(dictionary, model, doc)
+def get_features(users, users_tweets, model_file, dict_file, folds):
+  feats = {}
 
-			feats[label][user]["topics"] = {}
-			num_sig = 0
-			
-			for i in range(70): feats[label][user]["topics"][i] = 0
-			for topic_id, prop in topics: 
-				feats[label][user]["topics"][topic_id] = prop
-				if prop > .05: num_sig += 1
-			
-			feats[label][user]["num_sig_topics"] = num_sig 
-	
-	return feats
+  if(os.path.isfile(pv.__input_path__ + 'topic_features.dic')):
+    topic_feats_file = open(pv.__input_path__ + r'topic_features.dic', 'rb')
+    feats = pickle.load(topic_feats_file)
+    topic_feats_file.close()
+  else:
+    model = models.ldamodel.LdaModel.load(model_file)
+    dictionary = corpora.Dictionary.load(dict_file)
+    feats["control"] = {}
+    feats["schizophrenia"] = {}
+
+    for label in users_tweets.iterkeys():
+      for user in users_tweets[label].iterkeys():
+        if users[user]["fold"] not in folds: continue
+
+        feats[label][user] = {}
+        doc = ""
+
+        for tweet in users_tweets[label][user]["tweets"]:
+          doc += tweet
+
+        topics = __get_doc_topic_distribution__(dictionary, model, doc)
+
+        feats[label][user]["topics"] = {}
+        num_sig = 0
+
+        for i in range(70): feats[label][user]["topics"][i] = 0
+        for topic_id, prop in topics:
+          feats[label][user]["topics"][topic_id] = prop
+          if prop > .05: num_sig += 1
+
+        feats[label][user]["num_sig_topics"] = num_sig
+
+    topic_feats_file = open(pv.__input_path__ + r'topic_features.dic', 'wb')
+    pickle.dump(feats, topic_feats_file)
+    topic_feats_file.close()
+
+  return feats
 
