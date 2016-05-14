@@ -1,3 +1,7 @@
+"""
+Create a SQLite database with tweets parsed by tweebo.
+"""
+
 import sqlite3
 import gensim.models
 import gensim.models.doc2vec

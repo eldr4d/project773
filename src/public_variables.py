@@ -23,13 +23,24 @@ __path_to_tweeboparser__ = '../tools/ark-tweet-nlp-0.3.2.jar'
 
 __unknown_word__ = '__UNKNOWN__'
 
-
-TWEEBO_INPUT = "../../../output/tweebo/tweets_%s.txt"
-TWEEBO_OUTPUT = "../../../output/tweebo/tweets_%s.txt.predict"
-CSV_PATH = "../../input/anonymized_user_manifest.csv"
+#General
+CSV_PATH = "../../../input/anonymized_user_manifest.csv"
 DB_PATH = "../../../output/tweets.db"
+
+#Tweebo
+TWEEBO_INPUT = "../../../output/tweebo/tweets_for_tweebo_%s.txt"
+TWEEBO_OUTPUT = "../../../output/tweebo/tweets_for_tweebo_%s.txt.predict"
+
+#Doc2Vec
 DOC2VEC_WIDTH = 100
 DOC2VEC = "../../../doc2vec.d2v"
 DOC2VEC_K = 50 #number of clusters
 DOC2VEC_KMEANS = "../../../output/doc2vec_kmeans.pickle"
 DOC2VEC_FEATURES = "../../../output/doc2vec_features.pickle"
+
+#Word2Vec
+WORD2VEC = "../../../output/word2vec.w2v"
+WORD2VEC_WIDTH = 100
+WORD2VEC_K = 75 #number of clusters
+WORD2VEC_KMEANS = "../../../output/word2vec_kmeans.pickle"
+WORD2VEC_FEATURES = "../../../output/word2vec_features.pickle"

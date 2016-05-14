@@ -48,7 +48,7 @@ class TweetCleaner:
         return " ".join(word["clean"] for word in tweet)
     @staticmethod
     def regex_exclude(tweet):
-        return re.match(TweetCleaner.EXCLUDE, TweetCleaner.word_string(tweet))
+        return re.search(TweetCleaner.EXCLUDE, TweetCleaner.word_string(tweet))
     @staticmethod
     def should_include(tweet):
         """
