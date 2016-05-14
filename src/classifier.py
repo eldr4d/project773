@@ -17,6 +17,7 @@ import perplexity_model as perp
 import read_dataset as rd
 import doc2vec_features
 import word2vec_features
+import post_time as pt
 
 # For full cross validation
 Folds_to_use = range(10)
@@ -121,6 +122,8 @@ def create_features(users, users_tweets):
 
   perplexity = perp.get_perplexity_of_users(users_tweets)
 
+  temporal = pt.tweet_time(users_tweets)
+
   topics = t.get_features(users, users_tweets, pv.__lda_model__, pv.__lda_dict__, folds_for_features)
 
   liwc = lf.get_features(users, users_tweets, pv.__liwc__, folds_for_features)
@@ -177,6 +180,22 @@ def create_features(users, users_tweets):
     # user_features.append(perplexity[dic["group"]][user]["unigrams"])
     # user_features.append(perplexity[dic["group"]][user]["bigrams"])
     # user_features.append(perplexity[dic["group"]][user]["trigrams"])
+
+    # Add time features
+    user_features.append(temporal[dic["group"]][user]["avg_posting_time"])
+    user_features.append(temporal[dic["group"]][user]["frac_AM_posts"])
+    user_features.append(temporal[dic["group"]][user]["frac_winter_posts"])
+    user_features.append(temporal[dic["group"]][user]["frac_summer_posts"])
+    user_features.append(temporal[dic["group"]][user]["daily_tweeting_rate"])
+    user_features.append(temporal[dic["group"]][user]["weekly_tweeting_rate"])
+    user_features.append(temporal[dic["group"]][user]["monthly_tweeting_rate"])
+    user_features.append(temporal[dic["group"]][user]["10_min_span_tweets"])
+    user_features.append(temporal[dic["group"]][user]["30_min_span_tweets"])
+    user_features.append(temporal[dic["group"]][user]["60_min_span_tweets"])
+    user_features.append(temporal[dic["group"]][user]["10_min_span_time"])
+    user_features.append(temporal[dic["group"]][user]["30_min_span_time"])
+    user_features.append(temporal[dic["group"]][user]["60_min_span_time"])
+    user_features.append(temporal[dic["group"]][user]["comp_120ch_twt_60sit"])
 
     ######### Add Twitter metadata features #########
     #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
