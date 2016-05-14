@@ -4,15 +4,21 @@ from nltk.stem.porter import *
 
 from datetime import date
 from collections import Counter, defaultdict
-from scipy.stats.stats import spearmanr
-from sklearn import metrics
+
 
 import pickle
 
+import scipy as scipy
+from scipy.stats import wilcoxon
+from scipy.stats.stats import spearmanr
+from sklearn import metrics, feature_selection
+
 import re, os, time, string
 import numpy as np
+import pickle as pickle
 
 import public_variables as pv
+import topic_features as tp
 
 
 '''
@@ -26,22 +32,16 @@ as well as the mutual info btwn certain category pairs for the tweeter.
 
 '''
 
-stop = stopwords.words('english') + ['__url__', '__um__', '__sm__','__ht__', 'da', 'would', 'that', 'rt', 'gt', 'lt', 'ht', 'via', 'amp', 'hi', 'hello', 'that', 'ive', 'dont', 'isnt', 'ill', 'hell', 'no', 'yeah', 'youve', 'teh', 'lot', 'didnt', 'dont']
 stemmer = PorterStemmer()
-regex = re.compile('[%s]' % re.escape(string.punctuation))
 
-def __tokenize_and_normalize__(text):
+def __preprocess__(text):
   text = text.replace("'", "")
-  text = re.sub("([^0-9A-Za-z__ \t])|(\w+:\/\/\S+)"," ",text)
-  text = re.sub("[0-9]+", "", text)
-
+  text = text.replace("-", "")
   words = text.split()
-  words = [stemmer.stem(word.lower()) for word in words if (word.strip().lower() not in stop) and (len(word) > 1)]
-  words = [re.sub(regex, '', word) for word in words]
-
+  words = [stemmer.stem(word.lower()) for word in words]
   return words
 
-def __num_days__(d1, d2): 
+def __num_days__(d1, d2):
   delta = d1 - d2
   return abs(delta.days)
 
@@ -65,7 +65,7 @@ def __iter_tweets_by_week__(user_tweets):
           yield instance
         instance = " "
       else:
-        instance += u" ".join([l.strip() for l in __tokenize_and_normalize__(tweet)])
+        instance += u" ".join([l.strip() for l in __preprocess__(tweet)])
   except Exception:
     print "Timestamp Error: Discarding Users Tweets"
   finally:
@@ -88,17 +88,16 @@ def read_liwc(path):
     word = tmp[0]
     ids = tmp[1:]
     for _id in ids:
-      cat_2_words[id_2_cat[_id]].append(stemmer.stem(word.replace("*", "").replace("'", "").lower()))
+      cat_2_words[id_2_cat[_id]].append(stemmer.stem(word.replace("*", "").replace("'", "").replace("-", "").lower()))
   return cat_2_words
 
 def __get_counts__(doc):
-  tokens = __tokenize_and_normalize__(doc)
+  tokens = __preprocess__(doc)
   return Counter(tokens), len(tokens)
 
 def __get_liwc_distr__(doc, liwc_dic):
   doc_bow, num_tokens = __get_counts__(doc)
   feats = defaultdict(lambda:0,{})
-  sorted_cat = sorted(liwc_dic, key=lambda tup: tup[0])
 
   for cat in liwc_dic.keys():
     for w in liwc_dic[cat]:
@@ -108,20 +107,27 @@ def __get_liwc_distr__(doc, liwc_dic):
 
   feats_lst = []
   for cat in feats.keys():
+    if np.isnan(feats[cat]): feats[cat] = 0
     feats_lst.append((cat, feats[cat]))
 
   return sorted(feats_lst, key=lambda tup: (tup[0], tup[1]))
 
-def __get_variance__(user_feats):
-  cats = ["affect", "posemo", "negemo", "cogmech", "health", "body", "social", "incl", "excl", "see", "hear", "feel", "sad", "anger", "anx"]
-  return [np.var(user_feats[c]) for c in cats ]
+def __get_var__(vec):
+  var = np.var(vec)
+  if np.isnan(var): var = 0
+  return var
 
-def __get_mixed_model_variance__(user_feats):
-  raise NotImplementedError
+# check which categories...
+def __get_variance__(user_feats, liwc_dic):
+  sig = ["we", "bio", "achieve", "family", "home", "past", "sexual", "space", "negemo", "incl", "affect", "social", "sad", "posemo", "humans", "number", "assent", 
+  "ingest", "work", "time", "present", "tentat", "incl", "motion", "shehe", "social", "friend", "body", "percept", "cause", "certain", "verb", "adv", "affect", 
+  "pronoun", "funct", "preps", "auxverb"]
+  return [(c, __get_var__(user_feats[c])) for c in liwc_dic.keys() ]
 
-def __get_mutual_info__(user_feats, bins=10):
-  pairs = [("social", "anx"), ("body", "health"), ("posemo", "negemo"), ("death", "posemo"), ("affect", "social"), ("see", "anx")]
-  minfo = []
+# mutual info/similarity of certain cat's time progressions....
+def __get_mutual_info__(user_feats, bins=3):
+  pairs = [("social", "anx"), ("body", "health"), ("posemo", "negemo"), ("death", "posemo"), ("affect", "social"), ("see", "anx"), ("body", "anger"), ("body", "death"), ("body", "negemo"), ("body", "posemo"), ("health", "negemo"), ("health", "posemo"), ("social", "excl"), ("social", "inhib"), ("social", "humans"), ("swear", "ingest"), ("swear", "anger"), ("ingest", "sad"), ("insight", "percept"), ("insight", "inhib"), ("insight", "incl"), ("body", "anger"), ("body", "death"), ("money", "bio"), ("work", "humans"), ("work", "i"), ("work", "insight"), ("tentat", "sad"), ("anx", "health"), ("anx", "insight"), ("anx", "you"), ("affect", "bio"), ("affect", "body"), ("affect", "sad")]
+  m_info = []
 
   for c1, c2 in pairs:
     plot = np.histogram2d(user_feats[c1], user_feats[c2], bins=bins)[0]
@@ -130,9 +136,53 @@ def __get_mutual_info__(user_feats, bins=10):
     except ValueError:
       mi = 0
     finally:
-      minfo.append(mi)
+      if np.isnan(mi):
+        mi= 0
+      m_info.append((c1, c2, mi))
+  return m_info
 
-  return minfo
+def __get_correlation__(user_feats):
+  pairs = [("social", "anx"), ("body", "health"), ("posemo", "negemo"), ("death", "posemo"), ("affect", "social"), ("see", "anx"), ("anger", "affect"), 
+  ("anger", "family"), ("anger", "posemo"), ("negemo", "affect"), ('negemo', "cogmech"), ("body", "cause"), ("body", "posemo"), ("body", "family"), 
+  ("work", "time"), ("time", "you"), ("social", "you"), ("social", "posemo"), ("social", "excl"), ("leisure", "affect"), ("anx", "death"), ("anx", "discrep"), 
+  ("anx", "sad"), ("anx", "time"), ("anx", "health"), ("anx", "percept"), ("anx", "work"), ("see", "assent"), ("sexual", "sad"), ("sexual", "inhib")]
+  s_corr = []
+  s_pval = []
+
+
+  for c1, c2 in pairs:
+    s = spearmanr(user_feats[c1], user_feats[c2])
+    corr = s[0]
+    pval = s[1]
+    if np.isnan(corr):
+      corr = 0
+      pval = 0
+    if np.isnan(pval):
+      pval = 0
+    s_corr.append((c1, c2, corr))
+    s_pval.append((c1, c2, pval))
+
+  return s_corr, s_pval
+
+# returns max and avg. cosine distance btween weeks liwc distributions.
+def __get_cosine_distance__(weeks):
+  avg_cd = 0
+  max_cd = 0
+  num_wks = len(weeks)
+
+  prev = weeks.pop()
+  for curr in weeks:
+    cd = scipy.spatial.distance.cosine(prev, curr)
+    avg_cd +=  cd
+    if cd > max_cd: max_cd = cd
+    prev = curr
+
+  avg_cd = np.float(avg_cd)/np.float(num_wks)
+  if np.isnan(avg_cd):
+    avg_cd = 0
+  return (avg_cd, max_cd)
+
+
 
 def get_features(users, users_tweets, liwcdic_file, folds):
   feats = {}
@@ -150,18 +200,35 @@ def get_features(users, users_tweets, liwcdic_file, folds):
         if users[user]["fold"] not in folds: continue
 
         feats[label][user] = {}
-        all_user_tweets = ""
-        for cat in liwc_dic: feats[label][user][cat] = []
+        feats[label][user]["liwc_by_week"] = {}
+        for cat in liwc_dic: feats[label][user]["liwc_by_week"][cat] = []
 
-        for tweet in __iter_tweets_by_week__(users_tweets[label][user]):
-          for cat, weight in __get_liwc_distr__(tweet, liwc_dic):
-            feats[label][user][cat].append(weight)
-          all_user_tweets += tweet
+        by_week = []
+        all_user_tweets = ""
+
+        for week_of_tweets in __iter_tweets_by_week__(users_tweets[label][user]):
+          week = []
+
+          for cat, weight in __get_liwc_distr__(week_of_tweets, liwc_dic):
+            week.append(weight)
+            feats[label][user]["liwc_by_week"][cat].append(weight)
+
+          by_week.append(week)
+          all_user_tweets += week_of_tweets
 
         feats[label][user]["liwc"] = __get_liwc_distr__(all_user_tweets, liwc_dic)
-        feats[label][user]["liwc_var"] = __get_variance__(feats[label][user])
-        feats[label][user]["liwc_minfo"] = __get_mutual_info__(feats[label][user])
 
+        feats[label][user]["liwc_var"] = __get_variance__(feats[label][user]["liwc_by_week"], liwc_dic)
+
+        feats[label][user]["liwc_minfo"] = __get_mutual_info__(feats[label][user]["liwc_by_week"])
+
+        avg_cd, max_cd = __get_cosine_distance__(by_week)
+        feats[label][user]["liwc_avg_cos_dis"] = avg_cd
+        feats[label][user]["liwc_max_cos_dis"] = max_cd
+
+        s_corr, s_pval = __get_correlation__(feats[label][user]["liwc_by_week"])
+        feats[label][user]["liwc_spearman_corr"] = s_corr
+        feats[label][user]["liwc_spearman_pval"] = s_pval
     liwc_feats_file = open(pv.__input_path__ + r'liwc_features.dic', 'wb')
     pickle.dump(feats, liwc_feats_file)
     liwc_feats_file.close()
