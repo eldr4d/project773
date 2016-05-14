@@ -119,7 +119,7 @@ def create_features(users, users_tweets):
 
   folds_for_features = Folds_to_use + Folds_to_predict
 
-  # perplexity = perp.get_perplexity_of_users(users_tweets)
+  perplexity = perp.get_perplexity_of_users(users_tweets)
 
   topics = t.get_features(users, users_tweets, pv.__lda_model__, pv.__lda_dict__, folds_for_features)
 
@@ -144,12 +144,12 @@ def create_features(users, users_tweets):
 
     user_features = []
 
-    # Add topic distribution as features
+    ######### Add topic distribution as features #########
     user_features.append(topics[dic["group"]][user]["num_sig_topics"])
-    # for topic_id in topics[dic["group"]][user]["topics"].iterkeys():
-    #   user_features.append(topics[dic["group"]][user]["topics"][topic_id])
+    #### for topic_id in topics[dic["group"]][user]["topics"].iterkeys():
+    ####   user_features.append(topics[dic["group"]][user]["topics"][topic_id])
 
-    # Add LIWC category distribution as feature
+    ######### Add LIWC category distribution as feature #########
     for i in range(63):
       user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
     for i in range(63):
@@ -164,21 +164,21 @@ def create_features(users, users_tweets):
     user_features.append(liwc[dic["group"]][user]["liwc_avg_cos_dis"])
     user_features.append(liwc[dic["group"]][user]["liwc_max_cos_dis"])
 
-    # Add parts-of-speech as feature
+    ######### Add parts-of-speech as feature #########
     for tag in pos_feats[dic["group"]][user]["avg_pos"].keys():
-      # user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
+      #### user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
       user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
-      # user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
+      #### user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
     # doc2vec_features.add_features(user, user_features)
     # word2vec_features.add_features(user, user_features)
 
-    # Add perplexity as feature
+    ######### Add perplexity as feature #########
     # user_features.append(perplexity[dic["group"]][user]["unigrams"])
     # user_features.append(perplexity[dic["group"]][user]["bigrams"])
     # user_features.append(perplexity[dic["group"]][user]["trigrams"])
 
-    # Add Twitter metadata features
+    ######### Add Twitter metadata features #########
     #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
     #user_features.append(users_tweets[dic["group"]][user]["friends_count"])
     #user_features.append(users_tweets[dic["group"]][user]["followers_count"])
