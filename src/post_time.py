@@ -138,11 +138,19 @@ def span_hour(sec):
 
 def spancount(span):
     count_span = [len(i) for i in span if len(i) > 1]
-    return count_span 
+    if len(count_span) > 0:
+        comp_time = (sum(count_span) / len(count_span))
+    else:
+        comp_time = 0
+    return comp_time 
     
 def timecount(tim):
     count_tim = [(max(i) - min(i)) for i in tim if len(i) > 1]
-    return count_tim
+    if len(count_tim) > 0:
+        comp_time = (sum(count_tim) / len(count_tim))
+    else:
+        comp_time = 0
+    return comp_time
 
 def tweet_time(users_tweets):
     times = {}
@@ -185,14 +193,14 @@ def tweet_time(users_tweets):
             times[key][k]["weekly_tweeting_rate"] = len(users_tweets[key][k]["tweets"]) / len(set(wmy))
             times[key][k]["monthly_tweeting_rate"] = len(users_tweets[key][k]["tweets"]) / len(set(my))
             
-            times[key][k]["10_min_span_tweets"] = numpy.mean(spancount(span_ten(ymdhm))) #avg number of tweets sent in span of 10-min frequency (tweets sent within 10 min of preceding tweet)
-            times[key][k]["10_min_span_time"] = numpy.mean(timecount(span_ten(ymdhm))) #avg time span in minutes, of a sitting
+            times[key][k]["10_min_span_tweets"] = spancount(span_ten(ymdhm)) #avg number of tweets sent in span of 10-min frequency (tweets sent within 10 min of preceding tweet)
+            times[key][k]["10_min_span_time"] = timecount(span_ten(ymdhm)) #avg time span in minutes, of a sitting
             
-            times[key][k]["30_min_span_tweets"] = numpy.mean(spancount(span_thirty(ymdhm))) 
-            times[key][k]["30_min_span_time"] = numpy.mean(timecount(span_ten(ymdhm)))            
+            times[key][k]["30_min_span_tweets"] = spancount(span_thirty(ymdhm)) 
+            times[key][k]["30_min_span_time"] = timecount(span_ten(ymdhm))            
 
-            times[key][k]["60_min_span_tweets"] = numpy.mean(spancount(span_hour(ymdhm))) 
-            times[key][k]["60_min_span_time"] = numpy.mean(timecount(span_ten(ymdhm)))
+            times[key][k]["60_min_span_tweets"] = spancount(span_hour(ymdhm)) 
+            times[key][k]["60_min_span_time"] = timecount(span_ten(ymdhm))
             
             times[key][k]["comp_120ch_twt_60sit"] = composing_long_tweets(long_tweet_time\
             (hour_sit_tweets(ymdhm,users_tweets[key][k]["tweets"])))
