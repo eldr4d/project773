@@ -31,7 +31,7 @@ with open("../../../output/d2v_cluster_examples.txt","w", encoding="utf8") as fo
             m=re.match("(.*)_(0|1)_(\\d+)",label[0])
             usr = m.group(1)
             index = int(m.group(3))
-            print("Usr: %s, index: %i" % (usr, index))
+            #print("Usr: %s, index: %i" % (usr, index))
             words = list(trdr.parsed_tweets(usr))[index]
             sentence = " ".join(word["clean"] for word in words)
             fout.write(sentence+"\n")

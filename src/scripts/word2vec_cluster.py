@@ -11,7 +11,7 @@ import sklearn.cluster
 import pickle
 
 model = gensim.models.Word2Vec.load(public_variables.WORD2VEC)
-km = sklearn.cluster.KMeans(public_variables.WORD2VEC_K, max_iter=100,n_init=3, verbose=True)
+km = sklearn.cluster.KMeans(public_variables.WORD2VEC_K, max_iter=500,n_init=10, verbose=True)
 '''
 print(dir(model))
 help(model)
@@ -24,4 +24,4 @@ mat = model.syn0
 print(mat.shape)
 km.fit(mat)
 with open(public_variables.WORD2VEC_KMEANS, "wb") as fout:
-    pickle.dump(km, fout)
+    pickle.dump(km, fout, 2)

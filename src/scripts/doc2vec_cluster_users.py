@@ -12,7 +12,6 @@ import util.tweet_cleaner
 import sklearn.cluster
 import pickle
 import csv
-import util.tweet_filter
 import numpy as np
 
 rdr = util.reader.Reader(public_variables.CSV_PATH)
@@ -41,4 +40,4 @@ for index, usr in enumerate(rdr.read_csv()):
 
 
 with open(public_variables.DOC2VEC_FEATURES,"wb") as fout:
-    pickle.dump(features, fout)
+    pickle.dump(features, fout,2)
