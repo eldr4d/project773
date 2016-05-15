@@ -45,7 +45,7 @@ def load_tweets():
             user_prof['friends'] = json_line['entities']['user']['friends_count']
             user_prof['joined'] = json_line['entities']['user']['created_at']
             users_dic[user]['prof'] = user_prof
-          
+
           #ignore retweets
           if(json_line["text"].startswith(pv.__RT_start__) == False):
             tweet = hf.replace_entities(json_line["text"], json_line["entities"])

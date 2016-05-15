@@ -20,10 +20,10 @@ def calculate_perplexity(truth, model):
     C_H = C_H - truth[word]*math.log(model[word],2)
 
   return str(math.pow(2,C_H))
-  
+
 def calculate_unigrams(tweets):
   unigrams = {}
-  # Join all tweets 
+  # Join all tweets
   line = " ".join(line.strip() for line in tweets)
 
   # Filter out non-letter symbols (comma, etc.)
@@ -217,7 +217,7 @@ def get_perplexity_of_users(users_tweets):
     unigrams = get_unigrams_of_stream(twitter_tweets)
     bigrams = get_bigrams_of_stream(twitter_tweets)
     trigrams = get_trigrams_of_stream(twitter_tweets)
-    
+
     perplexity = perplexity_of_users(unigrams, bigrams, trigrams, users_tweets)
 
     perplexity_file = open(pv.__input_path__ + pv.__perplexity_file__, 'wb')
