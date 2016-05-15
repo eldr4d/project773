@@ -29,6 +29,12 @@ class RunSvm(object):
             yp=Yp[i]
             y=Y[i]
 
+    def show_errors(self, clf, X, Y, prefix=""):
+        Yp=clf.predict(X)
+        precision1, recall1, f11, support=sklearn.metrics.precision_recall_fscore_support(Y, Yp, pos_label=1, average='binary')
+        print(prefix+"Precision: %f, Recall: %f, F1: %f" % (precision1, recall1, f11))
+        return (precision1, recall1, f11, support)
+
     def train_test_fold(self, fold, feats):
         print("Fold %i" % fold)
         folds = list(range(RunSvm.FOLDS))
@@ -36,14 +42,10 @@ class RunSvm(object):
         features = list(self.get_features(folds, feats))
         X = np.vstack([f["X"] for f in features])
         Y = np.vstack([f["Y"] for f in features]).ravel()
-        print("Shapes: %s, %s" % (str(X.shape), str(Y.shape)))
-        print("Distribution: %i, %i" % (np.count_nonzero(Y==0), np.count_nonzero(Y==1)))
         clf = svm.SVC(kernel='linear', C=7)
         clf.fit(X,Y)
         Yp=clf.predict(X)
-        print("Predicted Distribution: %i, %i" % (np.count_nonzero(Yp==0), np.count_nonzero(Yp==1)))
-        precision1, recall1, f11, support=sklearn.metrics.precision_recall_fscore_support(Y, Yp, pos_label=1, average='binary')
-        print("Train Precision: %f, Recall: %f, F1: %f" % (precision1, recall1, f11))
+        precision1, recall1, f11, support=self.show_errors(clf, X, Y,"Training ")
 
         testfeatures = list(self.get_features([fold], feats))
         testX = np.vstack([f["X"] for f in testfeatures])
@@ -52,7 +54,7 @@ class RunSvm(object):
         print("Distribution: %i, %i" % (np.count_nonzero(testY==0), np.count_nonzero(testY==1)))
         testyp=clf.predict(testX)
         print("Predicted Distribution: %i, %i" % (np.count_nonzero(testyp==0), np.count_nonzero(testyp==1)))
-        precision2, recall2, f12, support=sklearn.metrics.precision_recall_fscore_support(testY, testyp, pos_label=1, average='binary')
+        precision2, recall2, f12, support=self.show_errors(clf,testX,testY,"Testing ")
         print("Test Precision: %f, Recall: %f, F1: %f" % (precision2, recall2, f12))
         self.w.writerow([fold, precision1, recall1, f11, precision2, recall2, f12])
         return {"X":testX,"Y":testY,"fold":fold,"Yp":testyp}

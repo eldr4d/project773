@@ -99,8 +99,8 @@ def __get_liwc_distr__(doc, liwc_dic):
   doc_bow, num_tokens = __get_counts__(doc)
   feats = defaultdict(lambda:0,{})
 
-  for cat in liwc_dic.keys():
-    for w in liwc_dic[cat]:
+  for cat, words in liwc_dic.items():
+    for w in words:
       if not feats[cat]: feats[cat] = 0
       if doc_bow[w] == 0: continue
       feats[cat] += np.float64(doc_bow[w])/np.float64(num_tokens)
@@ -122,7 +122,7 @@ def __get_variance__(user_feats, liwc_dic):
   sig = ["we", "bio", "achieve", "family", "home", "past", "sexual", "space", "negemo", "incl", "affect", "social", "sad", "posemo", "humans", "number", "assent", 
   "ingest", "work", "time", "present", "tentat", "incl", "motion", "shehe", "social", "friend", "body", "percept", "cause", "certain", "verb", "adv", "affect", 
   "pronoun", "funct", "preps", "auxverb"]
-  return [(c, __get_var__(user_feats[c])) for c in liwc_dic.keys() ]
+  return [(c, __get_var__(user_feats[c])) for c in sorted(liwc_dic.keys()) ]
 
 # mutual info/similarity of certain cat's time progressions....
 def __get_mutual_info__(user_feats, bins=3):
@@ -183,29 +183,30 @@ def __get_cosine_distance__(weeks):
   return (avg_cd, max_cd)
 
 
-
+import csv
 def get_features(users, users_tweets, liwcdic_file, folds):
   feats = {}
   if(os.path.isfile(pv.__input_path__ + 'liwc_features.dic')):
-    liwc_feats_file = open(pv.__input_path__ + r'liwc_features.dic', 'rb')
-    feats = pickle.load(liwc_feats_file)
-    liwc_feats_file.close()
+    print("Loading LIWC from cache")
+    with open(pv.__input_path__ + r'liwc_features.dic', 'rb') as liwc_feats_file:
+      feats = pickle.load(liwc_feats_file)
   else:
+    print("Calculating LIWC")
     feats["control"] = {}
     feats["schizophrenia"] = {}
     liwc_dic = read_liwc(liwcdic_file)
-
-    for label in users_tweets.iterkeys():
-      for user in users_tweets[label].iterkeys():
+    for label, usertweets in users_tweets.items():
+      for user, tweets in usertweets.items():
         if users[user]["fold"] not in folds: continue
 
         feats[label][user] = {}
+
+        print("Calculating liwc_by_week")
         feats[label][user]["liwc_by_week"] = {}
         for cat in liwc_dic: feats[label][user]["liwc_by_week"][cat] = []
 
         by_week = []
         all_user_tweets = ""
-
         for week_of_tweets in __iter_tweets_by_week__(users_tweets[label][user]):
           week = []
 
@@ -216,21 +217,26 @@ def get_features(users, users_tweets, liwcdic_file, folds):
           by_week.append(week)
           all_user_tweets += week_of_tweets
 
+        print("Calculating liwc")
         feats[label][user]["liwc"] = __get_liwc_distr__(all_user_tweets, liwc_dic)
 
+        print("Calculating liwc_var")
         feats[label][user]["liwc_var"] = __get_variance__(feats[label][user]["liwc_by_week"], liwc_dic)
 
+        print("Calculating liwc_minfo")
         feats[label][user]["liwc_minfo"] = __get_mutual_info__(feats[label][user]["liwc_by_week"])
 
+        print("Calculating liwc distance")
         avg_cd, max_cd = __get_cosine_distance__(by_week)
         feats[label][user]["liwc_avg_cos_dis"] = avg_cd
         feats[label][user]["liwc_max_cos_dis"] = max_cd
 
+        print("Calculating liwc correlation")
         s_corr, s_pval = __get_correlation__(feats[label][user]["liwc_by_week"])
         feats[label][user]["liwc_spearman_corr"] = s_corr
         feats[label][user]["liwc_spearman_pval"] = s_pval
-    liwc_feats_file = open(pv.__input_path__ + r'liwc_features.dic', 'wb')
-    pickle.dump(feats, liwc_feats_file)
-    liwc_feats_file.close()
+
+    with open(pv.__input_path__ + r'liwc_features.dic', 'wb') as liwc_feats_file:
+      pickle.dump(feats, liwc_feats_file)
 
   return feats

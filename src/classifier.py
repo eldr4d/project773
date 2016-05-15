@@ -8,7 +8,7 @@ from gensim import corpora, models
 
 import numpy as np
 import sklearn.metrics as metrics
-
+import util.run_svm
 import topic_features as t
 import liwc_features as lf
 import pos_features as ps
@@ -18,6 +18,15 @@ import read_dataset as rd
 import doc2vec_features
 import word2vec_features
 import post_time as pt
+
+##########################################
+#Features to enable
+##########################################
+ENABLE_LIWC=True
+ENABLE_PERPLEXITY=False
+ENABLE_TEMPORAL=False
+ENABLE_TOPICS=False
+ENABLE_POS=False
 
 # For full cross validation
 Folds_to_use = range(10)
@@ -34,8 +43,8 @@ def __labels_2_binary__(vector):
   return [__get_id__(label) for label in vector]
 
 def evaluate_results(inputs_and_labels, predictions):
-  print "*******************************************"
-  print ""
+  print("*******************************************")
+  print("")
 
   avg_precision = 0
   avg_recall = 0
@@ -50,7 +59,7 @@ def evaluate_results(inputs_and_labels, predictions):
      # print ""
      # print "Predicted: " + " (len: " + str(len(predictions[fold])) + ")"
      # print str(predictions[fold])
-     y_pred = __labels_2_binary__(predictions[fold])
+     y_pred = predictions[fold]
 
      roc_auc = metrics.roc_auc_score(y_true, y_pred)
 
@@ -75,7 +84,7 @@ def evaluate_results(inputs_and_labels, predictions):
 def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
   for i in Folds_to_predict:
-    svms[i] = svm.SVC(kernel=kernel, verbose=False)
+    svms[i] = svm.SVC(kernel='linear', verbose=False, C=7)
     # svms[i] = svm.SVC(kernel='poly', degree=5)
 
     inputs = []
@@ -90,7 +99,15 @@ def train_classifier(inputs_and_labels, kernel='linear'):
       # print labels
       # print "\n"
     # print str(len(inputs)) + " " + str(len(labels))
+    inputs=np.vstack(inputs)
+    labels = np.array(__labels_2_binary__(labels)).ravel()
+    print("Svm shapes: %s, %s" % (str(inputs.shape), str(labels.shape)))
     svms[i].fit(inputs, labels)
+    #print("C0: %i, C1: %i" % (len([k for k in __labels_2_binary__(labels) if k ==0]),len([k for k in __labels_2_binary__(labels) if k ==1])))
+    #print(np.std(inputs,axis=0))
+    #print(np.average(inputs,axis=0))
+    util.run_svm.RunSvm().show_errors(svms[i],inputs,labels)
+
 
   return svms
 
@@ -120,15 +137,23 @@ def create_features(users, users_tweets):
 
   folds_for_features = Folds_to_use + Folds_to_predict
 
-  perplexity = perp.get_perplexity_of_users(users_tweets)
+  if ENABLE_PERPLEXITY:
+    perplexity = perp.get_perplexity_of_users(users_tweets)
 
-  temporal = pt.tweet_time(users_tweets)
+  if ENABLE_TEMPORAL:
+    temporal = pt.tweet_time(users_tweets)
 
-  topics = t.get_features(users, users_tweets, pv.__lda_model__, pv.__lda_dict__, folds_for_features)
+  if ENABLE_TOPICS:
+    topics = t.get_features(users, users_tweets, pv.__lda_model__, pv.__lda_dict__, folds_for_features)
 
-  liwc = lf.get_features(users, users_tweets, pv.__liwc__, folds_for_features)
+  if ENABLE_LIWC:
+    print("Getting liwc features")
+    liwc = lf.get_features(users, users_tweets, pv.__liwc__, folds_for_features)
+    print("Got liwc features")
+    liwc_keys=list()
 
-  pos_feats = ps.get_pos_features(users, users_tweets, folds_for_features)
+  if ENABLE_POS:
+    pos_feats = ps.get_pos_features(users, users_tweets, folds_for_features)
 
   features_and_labels = {}
 
@@ -148,30 +173,31 @@ def create_features(users, users_tweets):
     user_features = []
 
     ######### Add topic distribution as features #########
-    user_features.append(topics[dic["group"]][user]["num_sig_topics"])
+    #user_features.append(topics[dic["group"]][user]["num_sig_topics"])
     #### for topic_id in topics[dic["group"]][user]["topics"].iterkeys():
     ####   user_features.append(topics[dic["group"]][user]["topics"][topic_id])
 
     ######### Add LIWC category distribution as feature #########
-    for i in range(63):
-      user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
-    for i in range(63):
-      user_features.append(liwc[dic["group"]][user]["liwc_var"][i][1])
-
-    for c1, c2, minfo in liwc[dic["group"]][user]["liwc_minfo"]:
-      user_features.append(minfo)
-    for c1, c2, corr in liwc[dic["group"]][user]["liwc_spearman_corr"]:
-      user_features.append(corr)
-    for c1, c2, pval in liwc[dic["group"]][user]["liwc_spearman_pval"]:
-      user_features.append(pval)
-    user_features.append(liwc[dic["group"]][user]["liwc_avg_cos_dis"])
-    user_features.append(liwc[dic["group"]][user]["liwc_max_cos_dis"])
+    if ENABLE_LIWC:
+      #for i in range(63):
+      #  user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
+      for feat in sorted(liwc[dic["group"]][user]["liwc_var"]):
+        user_features.append(feat[1])
+      for c1, c2, minfo in liwc[dic["group"]][user]["liwc_minfo"]:
+        user_features.append(minfo)
+      for c1, c2, corr in liwc[dic["group"]][user]["liwc_spearman_corr"]:
+        user_features.append(corr)
+      for c1, c2, pval in liwc[dic["group"]][user]["liwc_spearman_pval"]:
+        user_features.append(pval)
+      user_features.append(liwc[dic["group"]][user]["liwc_avg_cos_dis"])
+      user_features.append(liwc[dic["group"]][user]["liwc_max_cos_dis"])
 
     ######### Add parts-of-speech as feature #########
-    for tag in pos_feats[dic["group"]][user]["avg_pos"].keys():
-      #### user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
-      user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
-      #### user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
+    if ENABLE_POS:
+      for tag in pos_feats[dic["group"]][user]["avg_pos"].keys():
+        #### user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
+        user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
+        #### user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
     # doc2vec_features.add_features(user, user_features)
     # word2vec_features.add_features(user, user_features)
@@ -182,20 +208,21 @@ def create_features(users, users_tweets):
     # user_features.append(perplexity[dic["group"]][user]["trigrams"])
 
     # Add time features
-    user_features.append(temporal[dic["group"]][user]["avg_posting_time"])
-    user_features.append(temporal[dic["group"]][user]["frac_AM_posts"])
-    user_features.append(temporal[dic["group"]][user]["frac_winter_posts"])
-    user_features.append(temporal[dic["group"]][user]["frac_summer_posts"])
-    user_features.append(temporal[dic["group"]][user]["daily_tweeting_rate"])
-    user_features.append(temporal[dic["group"]][user]["weekly_tweeting_rate"])
-    user_features.append(temporal[dic["group"]][user]["monthly_tweeting_rate"])
-    user_features.append(temporal[dic["group"]][user]["10_min_span_tweets"])
-    user_features.append(temporal[dic["group"]][user]["30_min_span_tweets"])
-    user_features.append(temporal[dic["group"]][user]["60_min_span_tweets"])
-    user_features.append(temporal[dic["group"]][user]["10_min_span_time"])
-    user_features.append(temporal[dic["group"]][user]["30_min_span_time"])
-    user_features.append(temporal[dic["group"]][user]["60_min_span_time"])
-    user_features.append(temporal[dic["group"]][user]["comp_120ch_twt_60sit"])
+    if ENABLE_TEMPORAL:
+      user_features.append(temporal[dic["group"]][user]["avg_posting_time"])
+      user_features.append(temporal[dic["group"]][user]["frac_AM_posts"])
+      user_features.append(temporal[dic["group"]][user]["frac_winter_posts"])
+      user_features.append(temporal[dic["group"]][user]["frac_summer_posts"])
+      user_features.append(temporal[dic["group"]][user]["daily_tweeting_rate"])
+      user_features.append(temporal[dic["group"]][user]["weekly_tweeting_rate"])
+      user_features.append(temporal[dic["group"]][user]["monthly_tweeting_rate"])
+      user_features.append(temporal[dic["group"]][user]["10_min_span_tweets"])
+      user_features.append(temporal[dic["group"]][user]["30_min_span_tweets"])
+      user_features.append(temporal[dic["group"]][user]["60_min_span_tweets"])
+      user_features.append(temporal[dic["group"]][user]["10_min_span_time"])
+      user_features.append(temporal[dic["group"]][user]["30_min_span_time"])
+      user_features.append(temporal[dic["group"]][user]["60_min_span_time"])
+      user_features.append(temporal[dic["group"]][user]["comp_120ch_twt_60sit"])
 
     ######### Add Twitter metadata features #########
     #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
@@ -213,10 +240,11 @@ def main(argv):
   users = load_manifest()
 
   start = time.time()
-  print "Using folds: " + str(Folds_to_use)
-  print "Predicting folds: " + str(Folds_to_predict)
-  fold = Folds_to_use[0]
+  print("Using folds: " + str(Folds_to_use))
+  print("Predicting folds: " + str(Folds_to_predict))
+  print("Creating features")
   features_and_labels = create_features(users, users_tweets)
+  print("Features created")
   # print features_and_labels.keys()
   # print ""
   # print features_and_labels[fold].keys()
@@ -231,8 +259,8 @@ def main(argv):
   # print results
   evaluate_results(features_and_labels, results)
   end = time.time()
-  print ""
-  print "Time: " + str(end - start)
+  print("")
+  print("Time: " + str(end - start))
 
 if __name__ == "__main__":
   main(sys.argv[1:])
