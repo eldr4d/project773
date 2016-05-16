@@ -191,8 +191,6 @@ def create_features(users, users_tweets):
        user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
       for c1, c2, minfo in liwc[dic["group"]][user]["liwc_minfo"]:
         user_features.append(minfo)
-      # for c1, c2, corr in liwc[dic["group"]][user]["liwc_spearman_corr"]:
-      #   user_features.append(corr)
 
     ######### Add parts-of-speech as feature #########
     if ENABLE_POS:
