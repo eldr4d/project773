@@ -26,7 +26,7 @@ import coherence_features as cf
 ENABLE_LIWC=True
 ENABLE_PERPLEXITY=True
 ENABLE_TEMPORAL=True
-ENABLE_COHERENCE=True
+ENABLE_COHERENCE=False
 ENABLE_TOPICS=True
 ENABLE_POS=True
 ENABLE_DOC2VEC=True
@@ -88,7 +88,7 @@ def evaluate_results(inputs_and_labels, predictions):
 def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
   for i in Folds_to_predict:
-    svms[i] = svm.SVC(kernel='linear', verbose=False, C=7)
+    svms[i] = svm.SVC(kernel, verbose=False, C=7)
     # svms[i] = svm.SVC(kernel='poly', degree=5)
 
     inputs = []
