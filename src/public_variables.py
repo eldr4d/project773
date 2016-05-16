@@ -84,5 +84,5 @@ POS_TAGSET={pos.split()[0]:" ".join(pos.split()[1:]) for pos in POS_TAGSET_STR.s
 
 SKIP_USERS=["kABBqs5cM25","ioY8SXeZ4O"]
 
-TWEET_TIME="../../../output/tweet_time.pickle"
-COHERENCE="../../../output/coherence.pickle"
+TWEET_TIME="../../output/tweet_time.pickle"
+COHERENCE="../../output/coherence.pickle"

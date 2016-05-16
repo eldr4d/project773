@@ -77,7 +77,7 @@ def get_coherence(users_tweets):
     else:
         tt = _get_coherence(users_tweets)
         with open(public_variables.COHERENCE, "wb") as fout:
-            pickle.dump(tt, fout)
+            pickle.dump(tt, fout, 2)
         return tt
 
 def _get_coherence(users_tweets):

@@ -162,7 +162,7 @@ def tweet_time(users_tweets):
     else:
         tt = _tweet_time(users_tweets)
         with open(public_variables.TWEET_TIME, "wb") as fout:
-            pickle.dump(tt, fout)
+            pickle.dump(tt, fout, 2)
         return tt
 
 def _tweet_time(users_tweets):
