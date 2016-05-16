@@ -18,6 +18,7 @@ import read_dataset as rd
 import doc2vec_features
 import word2vec_features
 import post_time as pt
+import coherence_features as cf
 
 ##########################################
 #Features to enable
@@ -25,6 +26,7 @@ import post_time as pt
 ENABLE_LIWC=True
 ENABLE_PERPLEXITY=False
 ENABLE_TEMPORAL=False
+ENABLE_COHERENCE=False
 ENABLE_TOPICS=False
 ENABLE_POS=False
 
@@ -142,6 +144,9 @@ def create_features(users, users_tweets):
 
   if ENABLE_TEMPORAL:
     temporal = pt.tweet_time(users_tweets)
+  
+  if ENABLE_COHERENCE:
+    temporal = cf.get_coherence(users_tweets)
 
   if ENABLE_TOPICS:
     topics = t.get_features(users, users_tweets, pv.__lda_model__, pv.__lda_dict__, folds_for_features)
@@ -223,6 +228,15 @@ def create_features(users, users_tweets):
       user_features.append(temporal[dic["group"]][user]["30_min_span_time"])
       user_features.append(temporal[dic["group"]][user]["60_min_span_time"])
       user_features.append(temporal[dic["group"]][user]["comp_120ch_twt_60sit"])
+    
+    # Add coherence features
+    if ENABLE_COHERENCE:
+      user_features.append(temporal[dic["group"]][user]["avg_FOC"])
+      user_features.append(temporal[dic["group"]][user]["median_FOC"])
+      user_features.append(temporal[dic["group"]][user]["std_FOC"])
+      user_features.append(temporal[dic["group"]][user]["avg_SOC"])
+      user_features.append(temporal[dic["group"]][user]["median_SOC"])
+      user_features.append(temporal[dic["group"]][user]["std_SOC"])
 
     ######### Add Twitter metadata features #########
     #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
