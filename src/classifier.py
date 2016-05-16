@@ -18,6 +18,7 @@ import read_dataset as rd
 import doc2vec_features
 import word2vec_features
 import post_time as pt
+import coherence_features as cf
 
 ##########################################
 #Features to enable
@@ -27,6 +28,9 @@ ENABLE_PERPLEXITY=True
 ENABLE_TEMPORAL=True
 ENABLE_TOPICS=True
 ENABLE_POS=True
+ENABLE_COHERENCE=True
+ENABLE_DOC2VEC=True
+ENABLE_WORD2VEC=True
 
 # For full cross validation
 Folds_to_use = range(10)
@@ -85,8 +89,7 @@ def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
   for i in Folds_to_predict:
     #svms[i] = svm.SVC(kernel='rbf', verbose=False)
-    svms[i] = svm.SVC(kernel='linear', verbose=False, C=7)
-    # svms[i] = svm.SVC(kernel='poly', degree=5)
+    svms[i] = svm.SVC(kernel, verbose=False, C=7)
 
     inputs = []
     labels = []
@@ -144,6 +147,9 @@ def create_features(users, users_tweets):
   if ENABLE_TEMPORAL:
     temporal = pt.tweet_time(users_tweets)
 
+  if ENABLE_COHERENCE:
+    temporal = cf.get_coherence(users_tweets)
+
   if ENABLE_TOPICS:
     topics = t.get_features(users, users_tweets, pv.__lda_model__, pv.__lda_dict__, folds_for_features)
 
@@ -174,24 +180,18 @@ def create_features(users, users_tweets):
     user_features = []
 
     ######### Add topic distribution as features #########
-    user_features.append(topics[dic["group"]][user]["num_sig_topics"])
-    for topic_id in sorted(topics[dic["group"]][user]["topics"].iterkeys()):
-      user_features.append(topics[dic["group"]][user]["topics"][topic_id])
+
+    if ENABLE_TOPICS:
+      user_features.append(topics[dic["group"]][user]["num_sig_topics"])
+      for topic_id in topics[dic["group"]][user]["topics"].iterkeys():
+        user_features.append(topics[dic["group"]][user]["topics"][topic_id])
 
     ######### Add LIWC category distribution as feature #########
     if ENABLE_LIWC:
-      #for i in range(63):
-      #  user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
-      for feat in sorted(liwc[dic["group"]][user]["liwc_var"]):
-        user_features.append(feat[1])
+      for i in range(63):
+       user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
       for c1, c2, minfo in liwc[dic["group"]][user]["liwc_minfo"]:
         user_features.append(minfo)
-      for c1, c2, corr in liwc[dic["group"]][user]["liwc_spearman_corr"]:
-        user_features.append(corr)
-      for c1, c2, pval in liwc[dic["group"]][user]["liwc_spearman_pval"]:
-        user_features.append(pval)
-      user_features.append(liwc[dic["group"]][user]["liwc_avg_cos_dis"])
-      user_features.append(liwc[dic["group"]][user]["liwc_max_cos_dis"])
 
     ######### Add parts-of-speech as feature #########
     if ENABLE_POS:
@@ -200,15 +200,16 @@ def create_features(users, users_tweets):
         user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
         #### user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
-    doc2vec_features.add_features(user, user_features)
-    word2vec_features.add_features(user, user_features)
-    doc2vec_features.add_shift(user, user_features)
-    ######### Add perplexity as feature #########
-    # user_features.append(perplexity[dic["group"]][user]["unigrams"])
-    # user_features.append(perplexity[dic["group"]][user]["bigrams"])
-    # user_features.append(perplexity[dic["group"]][user]["trigrams"])
+    if ENABLE_DOC2VEC:
+      doc2vec_features.add_features(user, user_features)
+    if ENABLE_WORD2VEC:
+      word2vec_features.add_features(user, user_features)    ######### Add perplexity as feature #########
+    if ENABLE_PERPLEXITY:
+      user_features.append(perplexity[dic["group"]][user]["unigrams"])
+      user_features.append(perplexity[dic["group"]][user]["bigrams"])
+      user_features.append(perplexity[dic["group"]][user]["trigrams"])
 
-    # Add time features
+    ######### Add time features #########
     if ENABLE_TEMPORAL:
       user_features.append(temporal[dic["group"]][user]["avg_posting_time"])
       user_features.append(temporal[dic["group"]][user]["frac_AM_posts"])
@@ -224,6 +225,14 @@ def create_features(users, users_tweets):
       user_features.append(temporal[dic["group"]][user]["30_min_span_time"])
       user_features.append(temporal[dic["group"]][user]["60_min_span_time"])
       user_features.append(temporal[dic["group"]][user]["comp_120ch_twt_60sit"])
+    # Add coherence features
+    if ENABLE_COHERENCE:
+      user_features.append(temporal[dic["group"]][user]["avg_FOC"])
+      user_features.append(temporal[dic["group"]][user]["median_FOC"])
+      user_features.append(temporal[dic["group"]][user]["std_FOC"])
+      user_features.append(temporal[dic["group"]][user]["avg_SOC"])
+      user_features.append(temporal[dic["group"]][user]["median_SOC"])
+      user_features.append(temporal[dic["group"]][user]["std_SOC"])
 
     ######### Add Twitter metadata features #########
     #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature

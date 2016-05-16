@@ -220,21 +220,21 @@ def get_features(users, users_tweets, liwcdic_file, folds):
         print("Calculating liwc")
         feats[label][user]["liwc"] = __get_liwc_distr__(all_user_tweets, liwc_dic)
 
-        print("Calculating liwc_var")
-        feats[label][user]["liwc_var"] = __get_variance__(feats[label][user]["liwc_by_week"], liwc_dic)
+        # print("Calculating liwc_var")
+        # feats[label][user]["liwc_var"] = __get_variance__(feats[label][user]["liwc_by_week"], liwc_dic)
 
         print("Calculating liwc_minfo")
         feats[label][user]["liwc_minfo"] = __get_mutual_info__(feats[label][user]["liwc_by_week"])
 
-        print("Calculating liwc distance")
-        avg_cd, max_cd = __get_cosine_distance__(by_week)
-        feats[label][user]["liwc_avg_cos_dis"] = avg_cd
-        feats[label][user]["liwc_max_cos_dis"] = max_cd
+        # print("Calculating liwc distance")
+        # avg_cd, max_cd = __get_cosine_distance__(by_week)
+        # feats[label][user]["liwc_avg_cos_dis"] = avg_cd
+        # feats[label][user]["liwc_max_cos_dis"] = max_cd
 
-        print("Calculating liwc correlation")
-        s_corr, s_pval = __get_correlation__(feats[label][user]["liwc_by_week"])
-        feats[label][user]["liwc_spearman_corr"] = s_corr
-        feats[label][user]["liwc_spearman_pval"] = s_pval
+        # print("Calculating liwc correlation")
+        # s_corr, s_pval = __get_correlation__(feats[label][user]["liwc_by_week"])
+        # feats[label][user]["liwc_spearman_corr"] = s_corr
+        # feats[label][user]["liwc_spearman_pval"] = s_pval
 
     with open(pv.__input_path__ + r'liwc_features.dic', 'wb') as liwc_feats_file:
       pickle.dump(feats, liwc_feats_file)
