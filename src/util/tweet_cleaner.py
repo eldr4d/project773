@@ -56,4 +56,16 @@ class TweetCleaner:
         :param tweet:
         :return:
         """
-        return (not TweetCleaner.regex_exclude(tweet)) and (TweetCleaner.count_words(tweet) > 4)
+        return TweetCleaner.is_english(TweetCleaner.word_string(tweet)) and (not TweetCleaner.regex_exclude(tweet)) and (TweetCleaner.count_words(tweet) > 4)
+    @staticmethod
+    def is_character(c):
+        return re.match("[a-zA-Z\\s]",c)
+    @staticmethod
+    def is_english(text):
+        """
+        filter for >= 2/3 english letters
+        :return:
+        """
+        a = len(text)
+        b = len(list(c for c in text if TweetCleaner.is_character(c)))
+        return b/a >= 2/3

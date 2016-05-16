@@ -16,4 +16,4 @@ mat = model.docvecs.doctag_syn0
 print(mat.shape)
 km.fit(mat)
 with open(public_variables.DOC2VEC_KMEANS, "wb") as fout:
-    pickle.dump(km, fout)
+    pickle.dump(km, fout,2)

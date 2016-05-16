@@ -38,4 +38,4 @@ for index, usr in enumerate(rdr.read_csv()):
     features[usr["anonymized_name"]] = {"X":cats, "Y":cond}
 
 with open(public_variables.WORD2VEC_FEATURES,"wb") as fout:
-    pickle.dump(features, fout)
+    pickle.dump(features, fout,2)
