@@ -181,7 +181,7 @@ def create_features(users, users_tweets):
     # user_features.append(perplexity[dic["group"]][user]["bigrams"])
     # user_features.append(perplexity[dic["group"]][user]["trigrams"])
 
-    # Add time features
+    ######### Add time features #########
     user_features.append(temporal[dic["group"]][user]["avg_posting_time"])
     user_features.append(temporal[dic["group"]][user]["frac_AM_posts"])
     user_features.append(temporal[dic["group"]][user]["frac_winter_posts"])
