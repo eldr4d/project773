@@ -84,8 +84,8 @@ def evaluate_results(inputs_and_labels, predictions):
 def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
   for i in Folds_to_predict:
-    svms[i] = svm.SVC(kernel='rbf', verbose=False)
-    #svms[i] = svm.SVC(kernel='linear', verbose=False, C=7)
+    #svms[i] = svm.SVC(kernel='rbf', verbose=False)
+    svms[i] = svm.SVC(kernel='linear', verbose=False, C=7)
     # svms[i] = svm.SVC(kernel='poly', degree=5)
 
     inputs = []
@@ -202,7 +202,7 @@ def create_features(users, users_tweets):
 
     doc2vec_features.add_features(user, user_features)
     word2vec_features.add_features(user, user_features)
-
+    doc2vec_features.add_shift(user, user_features)
     ######### Add perplexity as feature #########
     # user_features.append(perplexity[dic["group"]][user]["unigrams"])
     # user_features.append(perplexity[dic["group"]][user]["bigrams"])

@@ -20,9 +20,9 @@ class RunNn(object):
     FOLDS=10
     def __init__(self):
         self.momentum=0.1
-        self.weightdecay=0.001
+        self.weightdecay=0.0001
         self.hiddensize=20
-        self.learningrate=0.08
+        self.learningrate=0.02
         self.lrdecay=0.9998
         self.maxEpochs=400
     def run(self, feats, file):
@@ -57,6 +57,12 @@ class RunNn(object):
         in_to_hidden = FullConnection(inLayer, hiddenLayer1)
         hcon = FullConnection(hiddenLayer1, hiddenLayer2)
         hidden_to_out = FullConnection(hiddenLayer2, outLayer)
+        peek1 = FullConnection(inLayer, outLayer)
+        peek2 = FullConnection(hiddenLayer1, outLayer)
+        peek3 = FullConnection(hiddenLayer2, outLayer)
+        net.addConnection(peek1)
+        net.addConnection(peek2)
+        net.addConnection(peek3)
         net.addConnection(in_to_hidden)
         net.addConnection(hcon)
         net.addConnection(hidden_to_out)
