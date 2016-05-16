@@ -5,9 +5,9 @@ import csv
 
 #POS=["$","V","U","O","&","R","L","~"]
 
-POS=["Z","X"]
-
-
+#POS=["Z","X"]
+POS=["^","O"]
+#POS=["^","Z","O","X"]
 
 rows = []
 with open(public_variables.POS_STATS, 'r') as fin:
@@ -15,6 +15,7 @@ with open(public_variables.POS_STATS, 'r') as fin:
     for row in r:
         if(row["POS"] in POS):
             rows.append(row)
+rows=list(sorted(rows,key=lambda x:POS.index(x["POS"])))
 
 poss = [public_variables.POS_TAGSET[row["POS"]] for row in rows]
 pmeans = [float(row["Schizophrenia mean"]) for row in rows]

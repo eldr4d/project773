@@ -18,14 +18,14 @@ def load_tweets():
       directory = 'anonymized_schizophrenia_tweets'
 
 
-    print 'Loading category: ' + category + ' from dir: ' + pv.__input_path__ + directory
+    print('Loading category: ' + category + ' from dir: ' + pv.__input_path__ + directory)
 
     users_dic = {}
     for filename in os.listdir(pv.__input_path__ + directory):
       if(filename.endswith('tweets.gz') == False):
         continue
       user = re.sub('\.tweets\.gz$', '', filename)
-      print user
+      print(user)
       users_dic[user] = {}
       users_dic[user]["prof"] = {}
       users_dic[user]["tweets"] = []
@@ -69,9 +69,9 @@ def get_tweets():
   else:
     tweets = load_tweets()
 
-  print len(tweets)
-  print len(tweets['control'])
-  print len(tweets['schizophrenia'])
+  print(len(tweets))
+  print(len(tweets['control']))
+  print(len(tweets['schizophrenia']))
   return tweets
 
 # load_tweets()

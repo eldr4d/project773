@@ -22,5 +22,6 @@ with open(public_variables.WORD2VEC_STATS,"w", encoding="utf8", newline="") as f
             if usr not in public_variables.SKIP_USERS:
                 data[feat["Y"]].append(feat["X"][cat])
         t, p = ttest_ind(data[0], data[1], equal_var=False)
+        p = min([p * public_variables.WORD2VEC_K,1])
         w.writerow([cat, np.average(data[0]), np.std(data[0]), np.average(data[1]), np.std(data[1]), t, p])
 

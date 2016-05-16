@@ -67,7 +67,7 @@ def __iter_tweets_by_week__(user_tweets):
       else:
         instance += u" ".join([l.strip() for l in __preprocess__(tweet)])
   except Exception:
-    print "Timestamp Error: Discarding Users Tweets"
+    print("Timestamp Error: Discarding Users Tweets")
   finally:
     yield instance
 

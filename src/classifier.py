@@ -23,10 +23,10 @@ import post_time as pt
 #Features to enable
 ##########################################
 ENABLE_LIWC=True
-ENABLE_PERPLEXITY=False
-ENABLE_TEMPORAL=False
-ENABLE_TOPICS=False
-ENABLE_POS=False
+ENABLE_PERPLEXITY=True
+ENABLE_TEMPORAL=True
+ENABLE_TOPICS=True
+ENABLE_POS=True
 
 # For full cross validation
 Folds_to_use = range(10)
@@ -63,28 +63,29 @@ def evaluate_results(inputs_and_labels, predictions):
 
      roc_auc = metrics.roc_auc_score(y_true, y_pred)
 
-     print ""
-     print "Fold = " + str(fold)
-     print "Scores: "
-     print "ROC AUC: " + str(roc_auc)
-     print metrics.classification_report(y_true, y_pred)
-     print ""
+     print("")
+     print("Fold = " + str(fold))
+     print("Scores: ")
+     print("ROC AUC: " + str(roc_auc))
+     print(metrics.classification_report(y_true, y_pred))
+     print("")
 
      avg_roc_auc += np.float(roc_auc)/np.float(10)
      avg_precision += np.float(metrics.precision_score(y_true, y_pred))/np.float(10)
      avg_recall += np.float(metrics.recall_score(y_true, y_pred))/np.float(10)
      avg_f1 += np.float(metrics.f1_score(y_true, y_pred))/np.float(10)
 
-  print "Overall Scores: "
-  print "ROC AUC: " + str(avg_roc_auc)
-  print "Prec: " + str(avg_precision)
-  print "Recall: " + str(avg_recall)
-  print "F1: " + str(avg_f1)
+  print("Overall Scores: ")
+  print("ROC AUC: " + str(avg_roc_auc))
+  print("Prec: " + str(avg_precision))
+  print("Recall: " + str(avg_recall))
+  print("F1: " + str(avg_f1))
 
 def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
   for i in Folds_to_predict:
-    svms[i] = svm.SVC(kernel='linear', verbose=False, C=7)
+    svms[i] = svm.SVC(kernel='rbf', verbose=False)
+    #svms[i] = svm.SVC(kernel='linear', verbose=False, C=7)
     # svms[i] = svm.SVC(kernel='poly', degree=5)
 
     inputs = []
@@ -101,7 +102,7 @@ def train_classifier(inputs_and_labels, kernel='linear'):
     # print str(len(inputs)) + " " + str(len(labels))
     inputs=np.vstack(inputs)
     labels = np.array(__labels_2_binary__(labels)).ravel()
-    print("Svm shapes: %s, %s" % (str(inputs.shape), str(labels.shape)))
+    #print("Svm shapes: %s, %s" % (str(inputs.shape), str(labels.shape)))
     svms[i].fit(inputs, labels)
     #print("C0: %i, C1: %i" % (len([k for k in __labels_2_binary__(labels) if k ==0]),len([k for k in __labels_2_binary__(labels) if k ==1])))
     #print(np.std(inputs,axis=0))
@@ -173,9 +174,9 @@ def create_features(users, users_tweets):
     user_features = []
 
     ######### Add topic distribution as features #########
-    #user_features.append(topics[dic["group"]][user]["num_sig_topics"])
-    #### for topic_id in topics[dic["group"]][user]["topics"].iterkeys():
-    ####   user_features.append(topics[dic["group"]][user]["topics"][topic_id])
+    user_features.append(topics[dic["group"]][user]["num_sig_topics"])
+    for topic_id in sorted(topics[dic["group"]][user]["topics"].iterkeys()):
+      user_features.append(topics[dic["group"]][user]["topics"][topic_id])
 
     ######### Add LIWC category distribution as feature #########
     if ENABLE_LIWC:
@@ -199,8 +200,8 @@ def create_features(users, users_tweets):
         user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
         #### user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
-    # doc2vec_features.add_features(user, user_features)
-    # word2vec_features.add_features(user, user_features)
+    doc2vec_features.add_features(user, user_features)
+    word2vec_features.add_features(user, user_features)
 
     ######### Add perplexity as feature #########
     # user_features.append(perplexity[dic["group"]][user]["unigrams"])

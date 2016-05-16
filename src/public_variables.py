@@ -37,11 +37,12 @@ DOC2VEC = "../../../doc2vec.d2v"
 DOC2VEC_K = 100 #number of clusters
 DOC2VEC_KMEANS = "../../../output/doc2vec_kmeans.pickle"
 DOC2VEC_FEATURES = "../../../output/doc2vec_features.pickle"
+DOC2VEC_SHIFTS = "../../../output/doc2vec_shifts.pickle"
 
 #Word2Vec
 WORD2VEC = "../../../output/word2vec.w2v"
 WORD2VEC_WIDTH = 100
-WORD2VEC_K = 200 #number of clusters
+WORD2VEC_K = 75 #number of clusters
 WORD2VEC_KMEANS = "../../../output/word2vec_kmeans.pickle"
 WORD2VEC_FEATURES = "../../../output/word2vec_features.pickle"
 WORD2VEC_STATS = "../../../output/word2vec_stats.csv"

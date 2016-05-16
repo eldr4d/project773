@@ -42,7 +42,7 @@ class RunSvm(object):
         features = list(self.get_features(folds, feats))
         X = np.vstack([f["X"] for f in features])
         Y = np.vstack([f["Y"] for f in features]).ravel()
-        clf = svm.SVC(kernel='linear', C=7)
+        clf = svm.SVC(kernel='linear', C=5)
         clf.fit(X,Y)
         Yp=clf.predict(X)
         precision1, recall1, f11, support=self.show_errors(clf, X, Y,"Training ")
@@ -50,14 +50,14 @@ class RunSvm(object):
         testfeatures = list(self.get_features([fold], feats))
         testX = np.vstack([f["X"] for f in testfeatures])
         testY = np.vstack([f["Y"] for f in testfeatures]).ravel()
-        print("Shapes: %s, %s" % (str(testX.shape), str(testY.shape)))
-        print("Distribution: %i, %i" % (np.count_nonzero(testY==0), np.count_nonzero(testY==1)))
+        #print("Shapes: %s, %s" % (str(testX.shape), str(testY.shape)))
+        #print("Distribution: %i, %i" % (np.count_nonzero(testY==0), np.count_nonzero(testY==1)))
         testyp=clf.predict(testX)
-        print("Predicted Distribution: %i, %i" % (np.count_nonzero(testyp==0), np.count_nonzero(testyp==1)))
+        #print("Predicted Distribution: %i, %i" % (np.count_nonzero(testyp==0), np.count_nonzero(testyp==1)))
         precision2, recall2, f12, support=self.show_errors(clf,testX,testY,"Testing ")
-        print("Test Precision: %f, Recall: %f, F1: %f" % (precision2, recall2, f12))
+        #print("Test Precision: %f, Recall: %f, F1: %f" % (precision2, recall2, f12))
         self.w.writerow([fold, precision1, recall1, f11, precision2, recall2, f12])
-        return {"X":testX,"Y":testY,"fold":fold,"Yp":testyp}
+        return {"X":testX,"Y":testY,"fold":fold,"Yp":testyp,"TestPrecision":precision2,"TestRecall":recall2,"TestF1":f12}
 
     def run(self, feats, file):
         self.feats=feats
@@ -66,8 +66,17 @@ class RunSvm(object):
             self.w.writerow(["Fold","Train precision","Train recall","Train F1","Test precision","Test recall", "Test f1"])
             folds = list(range(RunSvm.FOLDS))
             self.rdr = util.reader.Reader(public_variables.CSV_PATH)
+            res=[]
             for fold in folds:
-                self.train_test_fold(fold, feats)
+                res.append(self.train_test_fold(fold, feats))
+
+            ap = np.average([d["TestPrecision"] for d in res])
+            ar = np.average([d["TestRecall"] for d in res])
+            af = np.average([d["TestF1"] for d in res])
+
+            print("Average Test Precision: %f, Recall: %f, F1: %f" % (ap, ar, af))
+
+
 
 
 

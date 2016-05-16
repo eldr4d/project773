@@ -13,7 +13,7 @@ def get_pos_list(users_tweets):
     for user in users_tweets[label].iterkeys():
        for pos in users_tweets[label][user]["tot_pos"].iterkeys():
         pos.add(pos)
-  print pos
+  print(pos)
   return list(pos)
 
 def dd():

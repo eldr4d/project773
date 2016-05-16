@@ -86,15 +86,15 @@ def check_script_is_present(run_tagger_cmd=RUN_TAGGER_CMD):
         assert "RunTagger [options]" in lines[0]
         success = True
     except OSError as err:
-        print "Caught an OSError, have you specified the correct path to runTagger.sh? We are using \"%s\". Exception: %r" % (run_tagger_cmd, repr(err))
+        print("Caught an OSError, have you specified the correct path to runTagger.sh? We are using \"%s\". Exception: %r" % (run_tagger_cmd, repr(err)))
     return success
 
 
 if __name__ == "__main__":
-    print "Checking that we can see \"%s\", this will crash if we can't" % (RUN_TAGGER_CMD)
+    print("Checking that we can see \"%s\", this will crash if we can't" % (RUN_TAGGER_CMD))
     success = check_script_is_present()
     if success:
-        print "Success."
-        print "Now pass in two messages, get a list of tuples back:"
+        print("Success.")
+        print("Now pass in two messages, get a list of tuples back:")
         tweets = ['this is a message', 'and a second message']
-        print runtagger_parse(tweets)
+        print(runtagger_parse(tweets))

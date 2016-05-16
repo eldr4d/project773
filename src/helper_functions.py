@@ -40,6 +40,6 @@ def load_tweets_from_twitter():
     tweets = pickle.load(tweets_file)
     tweets_file.close()
   else:
-    print "You need first to collect tweets from tweeter"
-  print len(tweets)
+    print("You need first to collect tweets from tweeter")
+  print(len(tweets))
   return tweets
