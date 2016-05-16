@@ -24,11 +24,13 @@ import coherence_features as cf
 #Features to enable
 ##########################################
 ENABLE_LIWC=True
-ENABLE_PERPLEXITY=False
-ENABLE_TEMPORAL=False
-ENABLE_COHERENCE=False
-ENABLE_TOPICS=False
-ENABLE_POS=False
+ENABLE_PERPLEXITY=True
+ENABLE_TEMPORAL=True
+ENABLE_COHERENCE=True
+ENABLE_TOPICS=True
+ENABLE_POS=True
+ENABLE_DOC2VEC=True
+ENABLE_WORD2VEC=True
 
 # For full cross validation
 Folds_to_use = range(10)
@@ -205,8 +207,10 @@ def create_features(users, users_tweets):
         user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
         #### user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
-    # doc2vec_features.add_features(user, user_features)
-    # word2vec_features.add_features(user, user_features)
+    if ENABLE_DOC2VEC:
+      doc2vec_features.add_features(user, user_features)
+    if ENABLE_WORD2VEC:
+      word2vec_features.add_features(user, user_features)
 
     ######### Add perplexity as feature #########
     if ENABLE_PERPLEXITY:
