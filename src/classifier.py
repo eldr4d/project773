@@ -142,15 +142,19 @@ def create_features(users, users_tweets):
   folds_for_features = Folds_to_use + Folds_to_predict
 
   if ENABLE_PERPLEXITY:
+    print("get_perplexity_of_users")
     perplexity = perp.get_perplexity_of_users(users_tweets)
 
   if ENABLE_TEMPORAL:
+    print("tweet_time")
     temporal = pt.tweet_time(users_tweets)
 
   if ENABLE_COHERENCE:
+    print("get_coherence")
     temporal = cf.get_coherence(users_tweets)
 
   if ENABLE_TOPICS:
+    print("get_features")
     topics = t.get_features(users, users_tweets, pv.__lda_model__, pv.__lda_dict__, folds_for_features)
 
   if ENABLE_LIWC:
@@ -160,8 +164,10 @@ def create_features(users, users_tweets):
     liwc_keys=list()
 
   if ENABLE_POS:
+    print("get_pos_features")
     pos_feats = ps.get_pos_features(users, users_tweets, folds_for_features)
 
+  print("Collecting features")
   features_and_labels = {}
 
   for i in Folds_to_use:

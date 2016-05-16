@@ -67,7 +67,20 @@ def sec_order_coherence(dic,tweets):
     soh_std = np.std(summary_vec) 
     return SOH,soh_median,soh_std
 
+import os
+import public_variables
+import pickle
 def get_coherence(users_tweets):
+    if os.path.exists(public_variables.COHERENCE):
+        with open(public_variables.COHERENCE, "rb") as fin:
+            return pickle.load(fin)
+    else:
+        tt = _get_coherence(users_tweets)
+        with open(public_variables.COHERENCE, "wb") as fout:
+            pickle.dump(tt, fout)
+        return tt
+
+def _get_coherence(users_tweets):
     coherence = {}
     coherence["control"] = {}
     coherence["schizophrenia"] = {}

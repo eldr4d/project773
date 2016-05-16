@@ -152,7 +152,20 @@ def timecount(tim):
         comp_time = 0
     return comp_time
 
+import os
+import public_variables
+import pickle
 def tweet_time(users_tweets):
+    if os.path.exists(public_variables.TWEET_TIME):
+        with open(public_variables.TWEET_TIME, "rb") as fin:
+            return pickle.load(fin)
+    else:
+        tt = _tweet_time(users_tweets)
+        with open(public_variables.TWEET_TIME, "wb") as fout:
+            pickle.dump(tt, fout)
+        return tt
+
+def _tweet_time(users_tweets):
     times = {}
     times["control"] = {}
     times["schizophrenia"] = {}
