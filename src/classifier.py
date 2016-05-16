@@ -182,23 +182,17 @@ def create_features(users, users_tweets):
     ######### Add topic distribution as features #########
     if ENABLE_TOPICS:
       user_features.append(topics[dic["group"]][user]["num_sig_topics"])
-    #### for topic_id in topics[dic["group"]][user]["topics"].iterkeys():
-    ####   user_features.append(topics[dic["group"]][user]["topics"][topic_id])
+      for topic_id in topics[dic["group"]][user]["topics"].iterkeys():
+        user_features.append(topics[dic["group"]][user]["topics"][topic_id])
 
     ######### Add LIWC category distribution as feature #########
     if ENABLE_LIWC:
-      #for i in range(63):
-      #  user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
-      for feat in sorted(liwc[dic["group"]][user]["liwc_var"]):
-        user_features.append(feat[1])
+      for i in range(63):
+       user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
       for c1, c2, minfo in liwc[dic["group"]][user]["liwc_minfo"]:
         user_features.append(minfo)
-      for c1, c2, corr in liwc[dic["group"]][user]["liwc_spearman_corr"]:
-        user_features.append(corr)
-      for c1, c2, pval in liwc[dic["group"]][user]["liwc_spearman_pval"]:
-        user_features.append(pval)
-      user_features.append(liwc[dic["group"]][user]["liwc_avg_cos_dis"])
-      user_features.append(liwc[dic["group"]][user]["liwc_max_cos_dis"])
+      # for c1, c2, corr in liwc[dic["group"]][user]["liwc_spearman_corr"]:
+      #   user_features.append(corr)
 
     ######### Add parts-of-speech as feature #########
     if ENABLE_POS:
