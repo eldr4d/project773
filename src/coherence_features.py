@@ -87,3 +87,4 @@ def get_coherence(users_tweets):
             coherence[key][k]["avg_SOC"] = SOC[0]
             coherence[key][k]["median_SOC"] = SOC[1]
             coherence[key][k]["std_SOC"] = SOC[2]
+    return coherence
