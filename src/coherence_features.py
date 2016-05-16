@@ -12,21 +12,21 @@ from collections import OrderedDict
 import numpy as np
 from scipy import spatial
 
-import topic_features as tf
+import topic_features as tof
 
 
 
 def tok(tweets):
     tokens = []
     for item in tweets:
-        loop = tf.__tokenize_and_clean__(item)
+        loop = tof.__tokenize_and_clean__(item)
         tokens.append(loop)
     return tokens
 
 def Bedi_LSA(tweets):
     tokens = []
     for item in tweets:
-        loop = tf.__tokenize_and_clean__(item)
+        loop = tof.__tokenize_and_clean__(item)
         tokens.append(loop)
     
     words = [item for sublist in tokens for item in sublist]
