@@ -19,8 +19,8 @@ By default the feature will contain all the features that we described in our re
 
 Keep in mind that the first run will be slow since it needs to create all the features. Consequent runs will be a lot faster since we cache our generated features.
 
+# Tweebo, Word2Vec and Doc2Vec
 
-Running Tweebo and word2vec is a lengthy process that was broken into separate steps.
 * tweebo_write_tweets.py: write tweets to text files and write a shell script to run tweebo.
 (Running the shell script will run Tweebo for close to 24 hours)
 * tweet_db_create.py: write parsed tweets to a database for easy access
