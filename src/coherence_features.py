@@ -67,6 +67,16 @@ def sec_order_coherence(dic,tweets):
     soh_std = np.std(summary_vec) 
     return SOH,soh_median,soh_std
 
+def third_order_coherence(dic,tweets):
+    word_to_vec = [[np.array(dic[x]) for x in item if x in dic] for item in tweets]
+    tweet_vec = [sum(x)/len(x) for x in word_to_vec if len(x) > 0]
+    summary_vec = [(1-(spatial.distance.cosine(tweet_vec[i],tweet_vec[i+3]))) for i in range(len(tweet_vec)-3)] 
+    SOH = np.average(summary_vec) 
+    #soh_min = [np.minimum(x) for x in summary_vec]
+    soh_median = np.median(summary_vec) 
+    soh_std = np.std(summary_vec) 
+    return SOH,soh_median,soh_std
+
 import os
 import public_variables
 import pickle
