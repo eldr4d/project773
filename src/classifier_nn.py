@@ -25,11 +25,11 @@ import coherence_features as cf
 ##########################################
 ENABLE_LIWC=True
 ENABLE_PERPLEXITY=True
-ENABLE_TEMPORAL=False
+ENABLE_TEMPORAL=True
 ENABLE_TOPICS=True
 ENABLE_POS=True
-ENABLE_COHERENCE=False
-ENABLE_DOC2VEC=False
+ENABLE_COHERENCE=True
+ENABLE_DOC2VEC=True
 ENABLE_WORD2VEC=True
 
 # For full cross validation
@@ -135,8 +135,19 @@ def load_manifest():
       users[row[0]]["group"] = row[1]
       users[row[0]]["fold"] = int(row[5])
   return users
-
+import os
+import pickle
 def create_features(users, users_tweets):
+  if os.path.exists(public_variables.NNFEATURES):
+    with open(public_variables.NNFEATURES, "rb") as fin:
+      return pickle.load(fin)
+  else:
+    tt = _create_features(users, users_tweets)
+    with open(public_variables.NNFEATURES, "wb") as fout:
+        pickle.dump(tt, fout, 2)
+    return tt
+
+def _create_features(users, users_tweets):
 
   folds_for_features = Folds_to_use + Folds_to_predict
 
@@ -169,19 +180,7 @@ def create_features(users, users_tweets):
   print("Collecting features")
   features_and_labels = {}
 
-  for i in Folds_to_use:
-    features_and_labels[i] = {}
-    features_and_labels[i]["features"] = []
-    features_and_labels[i]["labels"] = []
-
-  for i in Folds_to_predict:
-    features_and_labels[i] = {}
-    features_and_labels[i]["features"] = []
-    features_and_labels[i]["labels"] = []
-
   for user, dic in users.iteritems():
-    if users[user]["fold"] not in folds_for_features: continue   # for debugging: ignores users not in either fold...
-
     user_features = []
 
     ######### Add topic distribution as features #########
@@ -201,9 +200,9 @@ def create_features(users, users_tweets):
     ######### Add parts-of-speech as feature #########
     if ENABLE_POS:
       for tag in pos_feats[dic["group"]][user]["avg_pos"].keys():
-        #### user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
+        user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
         user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
-        #### user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
+        user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
     if ENABLE_DOC2VEC:
       doc2vec_features.add_features(user, user_features)
@@ -241,15 +240,18 @@ def create_features(users, users_tweets):
       user_features.append(coherence[dic["group"]][user]["std_SOC"])
 
     ######### Add Twitter metadata features #########
-    #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
-    #user_features.append(users_tweets[dic["group"]][user]["friends_count"])
-    #user_features.append(users_tweets[dic["group"]][user]["followers_count"])
+    user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
+    user_features.append(users_tweets[dic["group"]][user]["friends_count"])
+    user_features.append(users_tweets[dic["group"]][user]["followers_count"])
 
-    features_and_labels[dic["fold"]]["features"].append(user_features)
-    features_and_labels[dic["fold"]]["labels"].append(dic["group"])
+    features_and_labels[user]={}
+    features_and_labels[user]["X"]=user_features
+    features_and_labels[user]["Y"]= 1 if dic["group"] == "schizophrenia" else 0
 
   return features_and_labels
 
+import util.run_nn
+import public_variables
 def main(argv):
   users_tweets = rd.get_tweets()
 
@@ -261,19 +263,9 @@ def main(argv):
   print("Creating features")
   features_and_labels = create_features(users, users_tweets)
   print("Features created")
-  # print features_and_labels.keys()
-  # print ""
-  # print features_and_labels[fold].keys()
-  # print ""
-  # print str(len(features_and_labels[fold]["features"])) + " " + str(len(features_and_labels[fold]["labels"]))
-  # print ""
-  # print features_and_labels[fold]["labels"]
-  svms = train_classifier(features_and_labels, kernel='rbf')
-  results = do_prediction(features_and_labels, svms)
-  # print "\n"
-  # print "\n"
-  # print results
-  evaluate_results(features_and_labels, results)
+
+  nn = util.run_nn.RunNn()
+  nn.run(features_and_labels, "../../output/classifier_nn.csv", csvpath="scripts/"+public_variables.CSV_PATH)
   end = time.time()
   print("")
   print("Time: " + str(end - start))

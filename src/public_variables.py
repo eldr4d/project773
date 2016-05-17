@@ -86,3 +86,4 @@ SKIP_USERS=["kABBqs5cM25","ioY8SXeZ4O"]
 
 TWEET_TIME="../../output/tweet_time.pickle"
 COHERENCE="../../output/coherence.pickle"
+NNFEATURES="../../output/nnfeatures.pickle"
