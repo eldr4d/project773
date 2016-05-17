@@ -34,4 +34,6 @@ Word2Vec:
 
 Doc2Vec:
 * doc2vec_train.py: train doc2vec on parsed tweets from database
-* doc2vec_shift_calculate.py: calculate shift for each user
+* doc2vec_shift_calculate.py: calculate shift feature for each user
+* doc2vec_shift_stats.py: calculate t-tests on features
+* doc2vec_shift_svm.py: train svm on feature
