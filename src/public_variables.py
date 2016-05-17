@@ -24,8 +24,8 @@ __path_to_tweeboparser__ = '../tools/ark-tweet-nlp-0.3.2.jar'
 __unknown_word__ = '__UNKNOWN__'
 
 #General
-CSV_PATH = "../../../input/anonymized_user_manifest.csv"
-DB_PATH = "../../../output/tweets.db"
+CSV_PATH = __input_path__+ "anonymized_user_manifest.csv"
+DB_PATH = __input_path__+"tweets.db"
 
 #Tweebo
 TWEEBO_INPUT = "../../../output/tweebo/tweets_for_tweebo_%s.txt"
@@ -33,24 +33,25 @@ TWEEBO_OUTPUT = "../../../output/tweebo/tweets_for_tweebo_%s.txt.predict"
 
 #Doc2Vec
 DOC2VEC_WIDTH = 100
-DOC2VEC = "../../../doc2vec.d2v"
+DOC2VEC = __input_path__ + "doc2vec.d2v"
 DOC2VEC_K = 100 #number of clusters
-DOC2VEC_KMEANS = "../../../output/doc2vec_kmeans.pickle"
-DOC2VEC_FEATURES = "../../../output/doc2vec_features.pickle"
-DOC2VEC_SHIFTS = "../../../output/doc2vec_shifts.pickle"
+
+DOC2VEC_KMEANS = __input_path__ + "doc2vec_kmeans.pickle"
+DOC2VEC_FEATURES = __input_path__ + "doc2vec_features.pickle"
+DOC2VEC_SHIFTS = __input_path__ +  "doc2vec_shifts.pickle"
 
 #Word2Vec
-WORD2VEC = "../../../output/word2vec.w2v"
+WORD2VEC = __input_path__ + "word2vec.w2v"
 WORD2VEC_WIDTH = 100
 WORD2VEC_K = 75 #number of clusters
-WORD2VEC_KMEANS = "../../../output/word2vec_kmeans.pickle"
-WORD2VEC_FEATURES = "../../../output/word2vec_features.pickle"
-WORD2VEC_STATS = "../../../output/word2vec_stats.csv"
+WORD2VEC_KMEANS = __input_path__ + "word2vec_kmeans.pickle"
+WORD2VEC_FEATURES = __input_path__ + "word2vec_features.pickle"
+WORD2VEC_STATS = __input_path__ + "word2vec_stats.csv"
 
 #Parts of speech
-POS_FEATURES = "../../../output/parts_of_speech.pickle"
-POS_STATS = "../../../output/parts_of_speech_stats.csv"
-POS_EXAMPLES = "../../../output/parts_of_speech_examples.txt"
+POS_FEATURES = __input_path__ + "parts_of_speech.pickle"
+POS_STATS = __input_path__ + "parts_of_speech_stats.csv"
+POS_EXAMPLES = __input_path__ + "parts_of_speech_examples.txt"
 
 
 POS_TAGSET_STR="""\
@@ -84,5 +85,5 @@ POS_TAGSET={pos.split()[0]:" ".join(pos.split()[1:]) for pos in POS_TAGSET_STR.s
 
 SKIP_USERS=["kABBqs5cM25","ioY8SXeZ4O"]
 
-TWEET_TIME="../../output/tweet_time.pickle"
-COHERENCE="../../output/coherence.pickle"
+TWEET_TIME=__input_path__ + "tweet_time.pickle"
+COHERENCE=__input_path__ + "coherence.pickle"

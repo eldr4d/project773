@@ -24,13 +24,14 @@ import coherence_features as cf
 #Features to enable
 ##########################################
 ENABLE_LIWC=True
-ENABLE_PERPLEXITY=True
-ENABLE_TEMPORAL=True
 ENABLE_TOPICS=True
 ENABLE_POS=True
+ENABLE_PERPLEXITY=True
+ENABLE_TEMPORAL=True
 ENABLE_COHERENCE=True
 ENABLE_DOC2VEC=True
 ENABLE_WORD2VEC=True
+ENABLE_TWITTER_META=True
 
 # For full cross validation
 Folds_to_use = range(10)
@@ -63,7 +64,7 @@ def evaluate_results(inputs_and_labels, predictions):
      # print ""
      # print "Predicted: " + " (len: " + str(len(predictions[fold])) + ")"
      # print str(predictions[fold])
-     y_pred = predictions[fold]
+     y_pred = __labels_2_binary__(predictions[fold])
 
      roc_auc = metrics.roc_auc_score(y_true, y_pred)
 
@@ -102,14 +103,11 @@ def train_classifier(inputs_and_labels, kernel='linear'):
       # print labels
       # print "\n"
     # print str(len(inputs)) + " " + str(len(labels))
-    inputs=np.vstack(inputs)
-    labels = np.array(__labels_2_binary__(labels)).ravel()
-    #print("Svm shapes: %s, %s" % (str(inputs.shape), str(labels.shape)))
     svms[i].fit(inputs, labels)
     #print("C0: %i, C1: %i" % (len([k for k in __labels_2_binary__(labels) if k ==0]),len([k for k in __labels_2_binary__(labels) if k ==1])))
     #print(np.std(inputs,axis=0))
     #print(np.average(inputs,axis=0))
-    util.run_svm.RunSvm().show_errors(svms[i],inputs,labels)
+    # util.run_svm.RunSvm().show_errors(svms[i],inputs,labels)
 
 
   return svms
@@ -187,22 +185,22 @@ def create_features(users, users_tweets):
     ######### Add topic distribution as features #########
 
     if ENABLE_TOPICS:
-      user_features.append(topics[dic["group"]][user]["num_sig_topics"])
+      user_features.append(float(topics[dic["group"]][user]["num_sig_topics"]))
       for topic_id in topics[dic["group"]][user]["topics"].iterkeys():
-        user_features.append(topics[dic["group"]][user]["topics"][topic_id])
+        user_features.append(float(topics[dic["group"]][user]["topics"][topic_id]))
 
     ######### Add LIWC category distribution as feature #########
     if ENABLE_LIWC:
       for i in range(63):
        user_features.append(liwc[dic["group"]][user]["liwc"][i][1])
       for c1, c2, minfo in liwc[dic["group"]][user]["liwc_minfo"]:
-        user_features.append(minfo)
+        user_features.append(float(minfo))
 
     ######### Add parts-of-speech as feature #########
     if ENABLE_POS:
       for tag in pos_feats[dic["group"]][user]["avg_pos"].keys():
         #### user_features.append(pos_feats[dic["group"]][user]["avg_pos_per_tweet"][tag])
-        user_features.append(pos_feats[dic["group"]][user]["avg_pos"][tag])
+        user_features.append(float(pos_feats[dic["group"]][user]["avg_pos"][tag]))
         #### user_features.append(pos_feats[dic["group"]][user]["tot_pos"][tag])
 
     if ENABLE_DOC2VEC:
@@ -211,39 +209,40 @@ def create_features(users, users_tweets):
     if ENABLE_WORD2VEC:
       word2vec_features.add_features(user, user_features)    ######### Add perplexity as feature #########
     if ENABLE_PERPLEXITY:
-      user_features.append(perplexity[dic["group"]][user]["unigrams"])
-      user_features.append(perplexity[dic["group"]][user]["bigrams"])
-      user_features.append(perplexity[dic["group"]][user]["trigrams"])
+      user_features.append(float(perplexity[dic["group"]][user]["unigrams"]))
+      user_features.append(float(perplexity[dic["group"]][user]["bigrams"]))
+      user_features.append(float(perplexity[dic["group"]][user]["trigrams"]))
 
     ######### Add time features #########
     if ENABLE_TEMPORAL:
-      user_features.append(temporal[dic["group"]][user]["avg_posting_time"])
-      user_features.append(temporal[dic["group"]][user]["frac_AM_posts"])
-      user_features.append(temporal[dic["group"]][user]["frac_winter_posts"])
-      user_features.append(temporal[dic["group"]][user]["frac_summer_posts"])
-      user_features.append(temporal[dic["group"]][user]["daily_tweeting_rate"])
-      user_features.append(temporal[dic["group"]][user]["weekly_tweeting_rate"])
-      user_features.append(temporal[dic["group"]][user]["monthly_tweeting_rate"])
-      user_features.append(temporal[dic["group"]][user]["10_min_span_tweets"])
-      user_features.append(temporal[dic["group"]][user]["30_min_span_tweets"])
-      user_features.append(temporal[dic["group"]][user]["60_min_span_tweets"])
-      user_features.append(temporal[dic["group"]][user]["10_min_span_time"])
-      user_features.append(temporal[dic["group"]][user]["30_min_span_time"])
-      user_features.append(temporal[dic["group"]][user]["60_min_span_time"])
-      user_features.append(temporal[dic["group"]][user]["comp_120ch_twt_60sit"])
+      user_features.append(float(temporal[dic["group"]][user]["avg_posting_time"]))
+      user_features.append(float(temporal[dic["group"]][user]["frac_AM_posts"]))
+      user_features.append(float(temporal[dic["group"]][user]["frac_winter_posts"]))
+      user_features.append(float(temporal[dic["group"]][user]["frac_summer_posts"]))
+      user_features.append(float(temporal[dic["group"]][user]["daily_tweeting_rate"]))
+      user_features.append(float(temporal[dic["group"]][user]["weekly_tweeting_rate"]))
+      user_features.append(float(temporal[dic["group"]][user]["monthly_tweeting_rate"]))
+      user_features.append(float(temporal[dic["group"]][user]["10_min_span_tweets"]))
+      user_features.append(float(temporal[dic["group"]][user]["30_min_span_tweets"]))
+      user_features.append(float(temporal[dic["group"]][user]["60_min_span_tweets"]))
+      user_features.append(float(temporal[dic["group"]][user]["10_min_span_time"]))
+      user_features.append(float(temporal[dic["group"]][user]["30_min_span_time"]))
+      user_features.append(float(temporal[dic["group"]][user]["60_min_span_time"]))
+      user_features.append(float(temporal[dic["group"]][user]["comp_120ch_twt_60sit"]))
     # Add coherence features
     if ENABLE_COHERENCE:
-      user_features.append(coherence[dic["group"]][user]["avg_FOC"])
-      user_features.append(coherence[dic["group"]][user]["median_FOC"])
-      user_features.append(coherence[dic["group"]][user]["std_FOC"])
-      user_features.append(coherence[dic["group"]][user]["avg_SOC"])
-      user_features.append(coherence[dic["group"]][user]["median_SOC"])
-      user_features.append(coherence[dic["group"]][user]["std_SOC"])
+      user_features.append(float(coherence[dic["group"]][user]["avg_FOC"]))
+      user_features.append(float(coherence[dic["group"]][user]["median_FOC"]))
+      user_features.append(float(coherence[dic["group"]][user]["std_FOC"]))
+      user_features.append(float(coherence[dic["group"]][user]["avg_SOC"]))
+      user_features.append(float(coherence[dic["group"]][user]["median_SOC"]))
+      user_features.append(float(coherence[dic["group"]][user]["std_SOC"]))
 
     ######### Add Twitter metadata features #########
-    #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
-    #user_features.append(users_tweets[dic["group"]][user]["friends_count"])
-    #user_features.append(users_tweets[dic["group"]][user]["followers_count"])
+    if ENABLE_TWITTER_META:
+      user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
+      user_features.append(users_tweets[dic["group"]][user]["friends_count"])
+      user_features.append(users_tweets[dic["group"]][user]["followers_count"])
 
     features_and_labels[dic["fold"]]["features"].append(user_features)
     features_and_labels[dic["fold"]]["labels"].append(dic["group"])
