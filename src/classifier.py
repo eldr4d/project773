@@ -88,8 +88,7 @@ def evaluate_results(inputs_and_labels, predictions):
 def train_classifier(inputs_and_labels, kernel='linear'):
   svms = {}
   for i in Folds_to_predict:
-    #svms[i] = svm.SVC(kernel='rbf', verbose=False)
-    svms[i] = svm.SVC(kernel, verbose=False, C=7)
+    svms[i] = svm.SVC(kernel=kernel, verbose=False)
 
     inputs = []
     labels = []
@@ -151,7 +150,7 @@ def create_features(users, users_tweets):
 
   if ENABLE_COHERENCE:
     print("get_coherence")
-    temporal = cf.get_coherence(users_tweets)
+    coherence = cf.get_coherence(users_tweets)
 
   if ENABLE_TOPICS:
     print("get_features")
@@ -208,6 +207,7 @@ def create_features(users, users_tweets):
 
     if ENABLE_DOC2VEC:
       doc2vec_features.add_features(user, user_features)
+      doc2vec_features.add_shift(user, user_features)
     if ENABLE_WORD2VEC:
       word2vec_features.add_features(user, user_features)    ######### Add perplexity as feature #########
     if ENABLE_PERPLEXITY:
@@ -233,12 +233,12 @@ def create_features(users, users_tweets):
       user_features.append(temporal[dic["group"]][user]["comp_120ch_twt_60sit"])
     # Add coherence features
     if ENABLE_COHERENCE:
-      user_features.append(temporal[dic["group"]][user]["avg_FOC"])
-      user_features.append(temporal[dic["group"]][user]["median_FOC"])
-      user_features.append(temporal[dic["group"]][user]["std_FOC"])
-      user_features.append(temporal[dic["group"]][user]["avg_SOC"])
-      user_features.append(temporal[dic["group"]][user]["median_SOC"])
-      user_features.append(temporal[dic["group"]][user]["std_SOC"])
+      user_features.append(coherence[dic["group"]][user]["avg_FOC"])
+      user_features.append(coherence[dic["group"]][user]["median_FOC"])
+      user_features.append(coherence[dic["group"]][user]["std_FOC"])
+      user_features.append(coherence[dic["group"]][user]["avg_SOC"])
+      user_features.append(coherence[dic["group"]][user]["median_SOC"])
+      user_features.append(coherence[dic["group"]][user]["std_SOC"])
 
     ######### Add Twitter metadata features #########
     #user_features.append(len(users_tweets[dic["group"]][user]["tweets"])) # total number of tweets as feature
